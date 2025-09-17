@@ -19,7 +19,9 @@ def create_app(config_class=Config):
     # CORS
     CORS(app, resources={r"/*": {"origins": app.config["FRONTEND_URL"]}})
 
-
+    # Register routes
+    register_routes(api)
+   
     return app
 
 
