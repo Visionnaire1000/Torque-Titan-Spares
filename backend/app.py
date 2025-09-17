@@ -21,7 +21,10 @@ def create_app(config_class=Config):
 
     # Register routes
     register_routes(api)
-   
+    
+    # Initialize Stripe webhook
+    init_stripe(app)
+
     return app
 
 
