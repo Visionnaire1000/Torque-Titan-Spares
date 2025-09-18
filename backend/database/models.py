@@ -9,23 +9,22 @@ from core.extensions import db, bcrypt
 def generate_uuid():
     return str(uuid.uuid4())
 
-#------------------------------USER MODEL---------------------------------
+#------------------------------USERS MODEL---------------------------------
 class Users(db.Model, SerializerMixin):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
+    username = db.Column(db.String, unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-    role = db.Column(db.String, default="buyer", nullable=False)  # buyer or admin
-    name = db.Column(db.String, nullable=False)
+    role = db.Column(db.String, default="buyer")  # e.g., buyer, farmer, admin
 
-    #--------------------------RELATIONSHIPS--------------------------------
-    orders = db.relationship('Orders', back_populates='users', cascade='all, delete-orphan')
-    reviews = db.relationship('Reviews', back_populates='users', cascade='all, delete-orphan')
-    likes = db.relationship('ReviewReactions', back_populates='users', cascade='all, delete-orphan')
+    # -------------------------- RELATIONSHIPS --------------------------------
+    orders = db.relationship("Orders", back_populates="users", cascade="all, delete-orphan")
 
-    #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-password_hash','-orders.users', '-reviews.users', '-likes.users')
+    # ------------------------- SERIALIZE RULES -------------------------------
+    serialize_rules = ("-orders.users",)
+
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('email')
@@ -45,32 +44,18 @@ class Users(db.Model, SerializerMixin):
     
 #------------------------------SPARE PARTS MODEL---------------------------------
 class SpareParts(db.Model, SerializerMixin):
-    __tablename__ = 'spareparts'
+    __tablename__ = "spareparts"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    category = db.Column(db.String, nullable=False)
-    vehicle_type = db.Column(db.String, nullable=False)
-    brand = db.Column(db.String, nullable=False)
-    colour = db.Column(db.String, nullable=True)
+    name = db.Column(db.String, nullable=False)
+    brand = db.Column(db.String, nullable=True)
+    price = db.Column(db.Float, nullable=False)
 
-    buying_price = db.Column(db.Float, nullable=False)
-    marked_price = db.Column(db.Float, nullable=False)
-    discount_amount = db.Column(db.Float, default=0.0)
-    discount_percentage = db.Column(db.Float, default=0.0)
+    # -------------------------- RELATIONSHIPS --------------------------------
+    order_items = db.relationship("OrderItems", back_populates="sparepart")
 
-    image = db.Column(db.String, nullable=True)
-    description = db.Column(db.String, nullable=True)
-
-    average_rating = db.Column(db.Float, default=0.0)
-    total_reviews = db.Column(db.Integer, default=0)
-    total_likes = db.Column(db.Integer, default=0)
-    total_dislikes = db.Column(db.Integer, default=0)
-
-    #--------------------------RELATIONSHIPS--------------------------------
-    reviews = db.relationship('Reviews', back_populates='spareparts', cascade='all, delete-orphan')
-
-    #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-reviews.spareparts')
+    # ------------------------- SERIALIZE RULES -------------------------------
+    serialize_rules = ("-order_items.sparepart",)
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('category')
@@ -157,51 +142,56 @@ class ReviewReactions(db.Model, SerializerMixin):
     
 #------------------------------ORDERS MODEL---------------------------------
 class Orders(db.Model, SerializerMixin):
-    __tablename__ = 'orders'
+    __tablename__ = "orders"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
     status = db.Column(db.String)
     paid = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     total_price = db.Column(db.Float, default=0.0)
 
-    #  Address fields
+    # Address fields
     street = db.Column(db.String, nullable=False)
     city = db.Column(db.String, nullable=False)
     postal_code = db.Column(db.String, nullable=True)
-    country = db.Column(db.String, nullable=False, default="Kenya")
+    country = db.Column(db.String, nullable=False)
 
-    #--------------------------RELATIONSHIPS--------------------------------
-    users = db.relationship('Users', back_populates='orders')
-    order_items = db.relationship('OrderItems', back_populates='orders', cascade='all, delete-orphan')
+    # -------------------------- RELATIONSHIPS --------------------------------
+    users = db.relationship("Users", back_populates="orders")
+    order_items = db.relationship(
+        "OrderItems",
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
 
-    #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-users.orders', '-order_items.orders')
+    # ------------------------- SERIALIZE RULES -------------------------------
+    serialize_rules = ("-users.orders", "-order_items.order")
+
 
     #-------------------------CUSTOM METHOD---------------------------------
         #(calculates total-price of order items)
     def calculate_total(self):
         self.total_price = round(sum(item.subtotal for item in self.order_items), 2)
 
-#------------------------------REVIEW REACTIONS MODEL---------------------------------
+#------------------------------ORDER ITEMS MODEL---------------------------------
 class OrderItems(db.Model, SerializerMixin):
-    __tablename__ = 'order_items'
+    __tablename__ = "order_items"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    order_id = db.Column(db.String, db.ForeignKey('orders.id'), nullable=False)
-    sparepart_id = db.Column(db.String, db.ForeignKey('spareparts.id'), nullable=False)
+    order_id = db.Column(db.String, db.ForeignKey("orders.id"), nullable=False)
+    sparepart_id = db.Column(db.String, db.ForeignKey("spareparts.id"), nullable=False)
     quantity = db.Column(db.Integer, default=1)
 
     unit_price = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
 
-    #--------------------------RELATIONSHIPS--------------------------------
-    orders = db.relationship('Orders', back_populates='order_items')
-    spareparts =  db.relationship('SpareParts', back_populates='order_items')
+    # -------------------------- RELATIONSHIPS --------------------------------
+    order = db.relationship("Orders", back_populates="order_items")
+    sparepart = db.relationship("SpareParts", back_populates="order_items")
 
-    #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-orders.order_items')
+    # ------------------------- SERIALIZE RULES -------------------------------
+    serialize_rules = ("-order.order_items", "-sparepart.order_items")
 
     #-------------------------CUSTOM METHOD---------------------------------
        #(calculates total price of order items)

@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_cors import CORS
+from flask_cors import  CORS
 from core.config import Config
 from core.extensions import db, bcrypt, jwt, migrate, api
 from apis.routes import register_routes
