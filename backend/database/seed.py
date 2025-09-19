@@ -1,7 +1,7 @@
 import os
 from app import create_app
 from database.models import Users, SpareParts
-from core.extensions import db, bcrypt
+from core.extensions import db
 
 app = create_app()
 
@@ -10,23 +10,21 @@ def seed_super_admin():
     with app.app_context():
         email = os.getenv("SUPERADMIN_EMAIL")
         password = os.getenv("SUPERADMIN_PASSWORD")
-        name = os.getenv("SUPERADMIN_NAME")
-        address = os.getenv("SUPERADMIN_ADDRESS")
 
         # (Delete existing super admin(s))
         Users.query.filter_by(role="super_admin").delete()
         db.session.commit()
 
-        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        # (Create super admin with hashed password)
         super_admin = Users(
             email=email,
-            password_hash=hashed_password,
-            role="super_admin",
-            name=name,
-            address=address
+            role="super_admin"
         )
+        super_admin.set_password(password)  # use model method to hash password
+
         db.session.add(super_admin)
         db.session.commit()
+
         print(f"✅ Super admin created (email: {email})")
 
 # ----------------------------------SPARE PARTS SEEDING----------------------------------------------------
@@ -279,4 +277,4 @@ if __name__ == "__main__":
     with app.app_context():
         seed_super_admin()
         seed_spareparts()
-        print(" Database seeding completed successfully.")
+        print("✅ Database seeding completed successfully.")

@@ -14,17 +14,17 @@ class Users(db.Model, SerializerMixin):
     __tablename__ = "users"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    username = db.Column(db.String, unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
     role = db.Column(db.String, default="buyer")  # e.g., buyer, farmer, admin
 
     # -------------------------- RELATIONSHIPS --------------------------------
     orders = db.relationship("Orders", back_populates="users", cascade="all, delete-orphan")
+    reviews = db.relationship('Reviews', back_populates='users', cascade='all, delete-orphan')
+    likes = db.relationship('ReviewReactions', back_populates='users', cascade='all, delete-orphan')
 
     # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ("-orders.users",)
-
+    serialize_rules = ('-password_hash','-orders.users', '-reviews.users', '-likes.users')
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('email')
@@ -45,26 +45,41 @@ class Users(db.Model, SerializerMixin):
 #------------------------------SPARE PARTS MODEL---------------------------------
 class SpareParts(db.Model, SerializerMixin):
     __tablename__ = "spareparts"
-
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    name = db.Column(db.String, nullable=False)
-    brand = db.Column(db.String, nullable=True)
-    price = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String, nullable=False)
+    vehicle_type = db.Column(db.String, nullable=False)
+    brand = db.Column(db.String, nullable=False)
+    colour = db.Column(db.String, nullable=True)
+
+    buying_price = db.Column(db.Float, nullable=False)
+    marked_price = db.Column(db.Float, nullable=False)
+    discount_amount = db.Column(db.Float, default=0.0)
+    discount_percentage = db.Column(db.Float, default=0.0)
+
+    image = db.Column(db.String, nullable=True)
+    description = db.Column(db.String, nullable=True)
+
+    average_rating = db.Column(db.Float, default=0.0)
+    total_reviews = db.Column(db.Integer, default=0)
+    total_likes = db.Column(db.Integer, default=0)
+    total_dislikes = db.Column(db.Integer, default=0)
 
     # -------------------------- RELATIONSHIPS --------------------------------
     order_items = db.relationship("OrderItems", back_populates="sparepart")
+    reviews = db.relationship('Reviews', back_populates='spareparts', cascade='all, delete-orphan')
 
     # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ("-order_items.sparepart",)
+    serialize_rules = ('-order_items.sparepart','-reviews.spareparts')
 
     #--------------------------VALIDATIONS-----------------------------------
-    @validates('category')
+    @validates("category")
     def validate_category(self, key, value):
-        allowed = ['tyre', 'rim', 'battery', 'oil filter']
-        if value.lower() not in allowed:
-            raise ValueError(f"Category must be one of: {', '.join(allowed)}")
-        return value.lower()
-
+        allowed = ["tyre", "rim", "battery", "oil filter"]
+        value = value.lower().strip()
+        if value not in allowed:
+          raise ValueError(f"Category must be one of: {', '.join(allowed)}")
+        return value
+    
     @validates('vehicle_type')
     def validate_vehicle_type(self, key, value):
         allowed = ['sedan', 'suv', 'bus', 'truck']
