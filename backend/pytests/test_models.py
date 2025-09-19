@@ -1,9 +1,10 @@
 import pytest
+from sqlalchemy.orm import sessionmaker, scoped_session
 from app import create_app
 from core.extensions import db
 from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
 
-#----------------------------------- FIXTURES ----------------------------------------------
+# ----------------------------------- FIXTURES ----------------------------------------------
 @pytest.fixture(scope="session")
 def test_app():
     app = create_app()
@@ -19,7 +20,7 @@ def test_app():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database(test_app):
-    # (Create all tables once per test session and drop them at the end.)
+    """Create all tables once per test session and drop them at the end."""
     with test_app.app_context():
         db.create_all()
         yield
@@ -28,18 +29,20 @@ def setup_database(test_app):
 
 @pytest.fixture(autouse=True)
 def session(test_app):
+    """Provide a fresh database session for each test (transaction rolled back after)."""
     with test_app.app_context():
         connection = db.engine.connect()
         transaction = connection.begin()
-        options = dict(bind=connection, binds={})
-        session = db.create_scoped_session(options=options)
 
-        db.session = session
-        yield session
+        # ✅ Modern way: use sessionmaker + scoped_session
+        Session = scoped_session(sessionmaker(bind=connection))
+        db.session = Session()
+
+        yield db.session
 
         transaction.rollback()
         connection.close()
-        session.remove()
+        Session.remove()
 
 # --------------------------------- USERS MODEL ---------------------------------------------------------------------
 def test_user_password_hashing(session):
@@ -110,7 +113,7 @@ def test_invalid_rating(session):
     with pytest.raises(ValueError):
         Reviews(user=user, spareparts=part, rating=10)
 
-#------------------------------- ORDERS & ORDER ITEMS MODELS ---------------------------------------------------------
+# ------------------------------- ORDERS & ORDER ITEMS MODELS ---------------------------------------------------------
 def test_order_total_calculation(session):
     user = Users(email="buyer@example.com", password_hash="temp")
     user.set_password("pass")

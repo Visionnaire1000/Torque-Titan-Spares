@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from sqlalchemy.orm import sessionmaker, scoped_session
 from flask_jwt_extended import create_access_token
 from app import create_app
 from core.extensions import db
@@ -30,18 +31,20 @@ def setup_database(test_app):
 
 @pytest.fixture(autouse=True)
 def session(test_app):
+    """Provide a fresh DB session per test (transaction rolled back after)."""
     with test_app.app_context():
         connection = db.engine.connect()
         transaction = connection.begin()
-        options = dict(bind=connection, binds={})
-        session = db.create_scoped_session(options=options)
 
-        db.session = session
-        yield session
+        # ✅ Modern replacement for create_scoped_session
+        Session = scoped_session(sessionmaker(bind=connection))
+        db.session = Session()
+
+        yield db.session
 
         transaction.rollback()
         connection.close()
-        session.remove()
+        Session.remove()
 
 
 @pytest.fixture
@@ -113,9 +116,9 @@ def test_reviews_crud(client, session):
     resp = client.delete(f"/reviews/{review_id}",
                          headers=auth_header(user))
     assert resp.status_code == 200
-    
- # -----------------------------------REVIEWS EXTRA TESTS--------------------------------------------------------------
 
+
+# ----------------------------------- REVIEWS EXTRA TESTS --------------------------------------------------------------
 def test_create_valid_review(session):
     user = Users(email="rev1@example.com", name="Reviewer1")
     user.set_password("pass")
@@ -208,6 +211,7 @@ def test_deleting_review_updates_stats(session):
     part.update_review_stats()
     assert part.total_reviews == 0
     assert part.average_rating == 0
+
 
 # ---------------- ORDERS ----------------
 def test_order_flow(client, session):
