@@ -72,14 +72,6 @@ class SpareParts(db.Model, SerializerMixin):
     serialize_rules = ('-order_items.sparepart','-reviews.spareparts')
 
     #--------------------------VALIDATIONS-----------------------------------
-    @validates("category")
-    def validate_category(self, key, value):
-        allowed = ["tyre", "rim", "battery", "oil filter"]
-        value = value.lower().strip()
-        if value not in allowed:
-          raise ValueError(f"Category must be one of: {', '.join(allowed)}")
-        return value
-    
     @validates('vehicle_type')
     def validate_vehicle_type(self, key, value):
         allowed = ['sedan', 'suv', 'bus', 'truck']

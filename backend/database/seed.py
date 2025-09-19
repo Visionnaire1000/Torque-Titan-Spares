@@ -25,7 +25,7 @@ def seed_super_admin():
         db.session.add(super_admin)
         db.session.commit()
 
-        print(f"✅ Super admin created (email: {email})")
+        print("✅ Super admin created")
 
 # ----------------------------------SPARE PARTS SEEDING----------------------------------------------------
 def seed_spareparts():
@@ -210,9 +210,9 @@ def seed_spareparts():
             {"category": "oil filter","vehicle_type": "sedan","brand": "K&N","colour": "black","buying_price": 7500.00,"marked_price": 12500.00,"description": "Durable K&N oil filter for sedans","image": "https://i.imgur.com/lrO8VEs.jpeg"},
             {"category": "oil filter","vehicle_type": "sedan","brand": "Fram","colour": "black","buying_price": 8500.00,"marked_price": 14000.00,"description": "Reliable Fram oil filter for sedans","image": "https://i.imgur.com/PJD7W6J.jpeg"},
             {"category": "oil filter","vehicle_type": "sedan","brand": "Mann","colour": "black","buying_price": 9000.00,"marked_price": 15000.00,"description": "High-performance Mann oil filter for sedans","image": "https://i.imgur.com/WxusMFt.jpeg"},
-            {"category": "oil filter","vehicle_type": "sedan","brand": "AC Delco","colour": "silver","buying_price": 7200.00,"marked_price": 11800.00,"description": "AC Delco sedan oil filter","image": "https://i.imgur.com/DkZmdBG.jpeg"},
-            {"category": "oil filter","vehicle_type": "sedan","brand": "Motorcraft","colour": "silver","buying_price": 7400.00,"marked_price": 12200.00,"description": "Motorcraft oil filter for sedans","image": "https://i.imgur.com/eaxrjmF.jpeg"},
-            {"category": "oil filter","vehicle_type": "sedan","brand": "Purolator","colour": "silver","buying_price": 8800.00,"marked_price": 14500.00,"description": "Purolator sedan oil filter","image": "https://i.imgur.com/UfI96Go.jpeg"},
+            {"category": "oil filter","vehicle_type": "sedan","brand": "AC Delco","colour": "silver","buying_price": 7200.00,"marked_price": 11800.00,"description": "High-performance AC Delco truck oil filter","image": "https://i.imgur.com/DkZmdBG.jpeg"},
+            {"category": "oil filter","vehicle_type": "sedan","brand": "Motorcraft","colour": "silver","buying_price": 7400.00,"marked_price": 12200.00,"description": "Durable Motorcraft oil filter for trucks","image": "https://i.imgur.com/eaxrjmF.jpeg"},
+            {"category": "oil filter","vehicle_type": "sedan","brand": "Purolator","colour": "silver","buying_price": 8800.00,"marked_price": 14500.00,"description": "Purolator suv oil filter","image": "https://i.imgur.com/UfI96Go.jpeg"},
             {"category": "oil filter","vehicle_type": "sedan","brand": "Bosch","colour": "silver","buying_price": 9200.00,"marked_price": 15500.00,"description": "Bosch oil filter for sedans","image": "https://i.imgur.com/9pYr9TD.jpeg"},
             {"category": "oil filter","vehicle_type": "sedan","brand": "Fram","colour": "gold","buying_price": 7800.00,"marked_price": 12800.00,"description": "Fram sedan oil filter","image": "https://i.imgur.com/wKSzA7G.jpeg"},
             {"category": "oil filter","vehicle_type": "sedan","brand": "Mann","colour": "gold","buying_price": 7600.00,"marked_price": 12400.00,"description": "Mann sedan oil filter","image": "https://i.imgur.com/NXEJ5Z1.jpeg"},
@@ -224,8 +224,8 @@ def seed_spareparts():
             {"category": "oil filter","vehicle_type": "suv","brand": "K&N","colour": "black","buying_price": 7600.00,"marked_price": 11400.00,"description": "Durable K&N oil filter for suvs","image": "https://i.imgur.com/EnKPaUk.jpeg"},
             {"category": "oil filter","vehicle_type": "suv","brand": "Fram","colour": "black","buying_price": 8000.00,"marked_price": 13500.00,"description": "Reliable Fram oil filter for suvs","image": "https://i.imgur.com/jCvr5Yl.jpeg"},
             {"category": "oil filter","vehicle_type": "suv","brand": "Mann","colour": "black","buying_price": 9500.00,"marked_price": 15999.00,"description": "High-performance Mann oil filter for suvs","image": "https://i.imgur.com/IOj4cnU.jpeg"},
-            {"category": "oil filter","vehicle_type": "suv","brand": "AC Delco","colour": "silver","buying_price": 7350.00,"marked_price": 11850.00,"description": "AC Delco SUV oil filter","image": "https://i.imgur.com/s7OB3i0.jpeg"},
-            {"category": "oil filter","vehicle_type": "suv","brand": "Motorcraft","colour": "silver","buying_price": 7450.00,"marked_price": 8550.00,"description": "Motorcraft oil filter for suvs","image": "https://i.imgur.com/7vymLXH.jpeg"},
+            {"category": "oil filter","vehicle_type": "suv","brand": "AC Delco","colour": "silver","buying_price": 7350.00,"marked_price": 11850.00,"description": "High-performance AC Delco truck oil filter","image": "https://i.imgur.com/s7OB3i0.jpeg"},
+            {"category": "oil filter","vehicle_type": "suv","brand": "Motorcraft","colour": "silver","buying_price": 7450.00,"marked_price": 8550.00,"description": "Durable Motorcraft oil filter for trucks","image": "https://i.imgur.com/7vymLXH.jpeg"},
             {"category": "oil filter","vehicle_type": "suv","brand": "Purolator","colour": "silver","buying_price": 8820.00,"marked_price": 12350.00,"description": "Purolator suv oil filter","image": "https://i.imgur.com/VOYHWch.jpeg"},
             {"category": "oil filter","vehicle_type": "suv","brand": "Bosch","colour": "silver","buying_price": 9200.00,"marked_price": 11000.00,"description": "Bosch oil filter for suvs","image": "https://i.imgur.com/zY9hfMo.jpeg"},
             {"category": "oil filter","vehicle_type": "suv","brand": "Fram","colour": "gold","buying_price": 7800.00,"marked_price": 13450.00,"description": "Fram SUV oil filter","image": "https://i.imgur.com/5aq6tYE.jpeg"},
@@ -238,28 +238,28 @@ def seed_spareparts():
             {"category": "oil filter","vehicle_type": "truck","brand": "K&N","colour": "black","buying_price": 8500.00,"marked_price": 13500.00,"description": "Durable K&N oil filter for trucks","image": "https://i.imgur.com/X2srlSY.jpeg"},
             {"category": "oil filter","vehicle_type": "truck","brand": "Fram","colour": "black","buying_price": 8000.00,"marked_price": 14350.00,"description": "Reliable Fram oil filter for trucks","image": "https://i.imgur.com/160Y4yd.jpeg"},
             {"category": "oil filter","vehicle_type": "truck","brand": "Mann","colour": "black","buying_price": 9000.00,"marked_price": 15000.00,"description": "High-performance Mann oil filter for trucks","image": "https://i.imgur.com/enabDgH.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "AC Delco","colour": "silver","buying_price": 7200.00,"marked_price": 14800.00,"description": "AC Delco truck oil filter","image": "https://i.imgur.com/k81kIyP.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Motorcraft","colour": "silver","buying_price": 7400.00,"marked_price": 12250.00,"description": "Motorcraft oil filter for trucks","image": "https://i.imgur.com/jBhKW0D.png"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Purolator","colour": "silver","buying_price": 8860.00,"marked_price": 14570.00,"description": "Purolator truck oil filter","image": "https://i.imgur.com/yfOSkpu.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Bosch","colour": "silver","buying_price": 9700.00,"marked_price": 15700.00,"description": "Bosch oil filter for trucks","image": "https://i.imgur.com/QuK0c4S.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Fram","colour": "gold","buying_price": 7850.00,"marked_price": 12850.00,"description": "Fram truck oil filter","image": "https://i.imgur.com/W6vZPSH.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Mann","colour": "gold","buying_price": 7650.00,"marked_price": 12440.00,"description": "Mann truck oil filter","image": "https://i.imgur.com/hy86fJp.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Fram","colour": "gold","buying_price": 7860.00,"marked_price": 12860.00,"description": "Fram truck oil filter","image": "https://i.imgur.com/sgih5zI.jpeg"},
-            {"category": "oil filter","vehicle_type": "truck","brand": "Mann","colour": "gold","buying_price": 8200.00,"marked_price": 15450.00,"description": "Mann truck oil filter","image": "https://i.imgur.com/aqdEJrM.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "AC Delco","colour": "silver","buying_price": 7200.00,"marked_price": 14800.00,"description": " High-performance AC Delco truck oil filter","image": "https://i.imgur.com/k81kIyP.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Motorcraft","colour": "silver","buying_price": 7400.00,"marked_price": 12250.00,"description": "Durable Motorcraft oil filter for trucks","image": "https://i.imgur.com/jBhKW0D.png"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Purolator","colour": "silver","buying_price": 8860.00,"marked_price": 14570.00,"description": "Efficient Purolator truck oil filter","image": "https://i.imgur.com/yfOSkpu.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Bosch","colour": "silver","buying_price": 9700.00,"marked_price": 15700.00,"description": "Reliable Bosch oil filter for trucks","image": "https://i.imgur.com/QuK0c4S.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Fram","colour": "gold","buying_price": 7850.00,"marked_price": 12850.00,"description": "Long lasting Fram truck oil filter","image": "https://i.imgur.com/W6vZPSH.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Mann","colour": "gold","buying_price": 7650.00,"marked_price": 12440.00,"description": "One of the best Mann truck oil filter","image": "https://i.imgur.com/hy86fJp.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Fram","colour": "gold","buying_price": 7860.00,"marked_price": 12860.00,"description": "Latest Fram truck oil filter","image": "https://i.imgur.com/sgih5zI.jpeg"},
+            {"category": "oil filter","vehicle_type": "truck","brand": "Mann","colour": "gold","buying_price": 8200.00,"marked_price": 15450.00,"description": "Most affordable Mann truck oil filter","image": "https://i.imgur.com/aqdEJrM.jpeg"},
 
         # --------- BUS OIL FILTERS (12) ----------
             {"category": "oil filter","vehicle_type": "bus","brand": "Bosch","colour": "black","buying_price": 8500.00,"marked_price": 12350.00,"description": "Efficient Bosch oil filter for buses","image": "https://i.imgur.com/OQrnsNp.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "K&N","colour": "black","buying_price": 7550.00,"marked_price": 12530.00,"description": "Durable K&N oil filter for buses","image": "https://i.imgur.com/symW4Vq.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Fram","colour": "black","buying_price": 8530.00,"marked_price": 14000.00,"description": "Reliable Fram oil filter for buses","image": "https://i.imgur.com/AG0TIkA.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Mann","colour": "black","buying_price": 9500.00,"marked_price": 11500.00,"description": "High-performance Mann oil filter for buses","image": "https://i.imgur.com/u70LSGV.jpeg"},
-            {"category": "oil filter","vehicle_type": "bus","brand": "AC Delco","colour": "silver","buying_price": 7240.00,"marked_price": 11400.00,"description": "AC Delco bus oil filter","image": "https://i.imgur.com/P5Chj6R.jpeg"},
+            {"category": "oil filter","vehicle_type": "bus","brand": "AC Delco","colour": "silver","buying_price": 7240.00,"marked_price": 11400.00,"description": "High-performance AC Delco truck oil filter","image": "https://i.imgur.com/P5Chj6R.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Motorcraft","colour": "silver","buying_price": 7100.00,"marked_price": 12200.00,"description": "Motorcraft oil filter for buses","image": "https://i.imgur.com/Si3bLAV.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Purolator","colour": "silver","buying_price": 9000.00,"marked_price": 12340.00,"description": "Purolator bus oil filter","image": "https://i.imgur.com/skz6l2x.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Bosch","colour": "silver","buying_price": 9240.00,"marked_price": 12400.00,"description": "Bosch oil filter for buses","image": "https://i.imgur.com/lUYX29x.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Fram","colour": "gold","buying_price": 7850.00,"marked_price": 9850.00,"description": "Fram bus oil filter","image": "https://i.imgur.com/6bfjSSM.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Mann","colour": "gold","buying_price": 7600.00,"marked_price": 9950.00,"description": "Mann bus oil filter","image": "https://i.imgur.com/LpJPiBf.jpeg"},
             {"category": "oil filter","vehicle_type": "bus","brand": "Fram","colour": "gold","buying_price": 7850.00,"marked_price": 12500.00,"description": "Fram bus oil filter","image": "https://i.imgur.com/yRhz9pO.jpeg"},
-            {"category": "oil filter","vehicle_type": "bus","brand": "Mann","colour": "gold","buying_price": 7650.00,"marked_price": 12440.00,"description": "Mann bus oil filter","image": "https://i.imgur.com/tVNZKOw.jpeg"},
+            {"category": "oil filter","vehicle_type": "bus","brand": "Mann","colour": "gold","buying_price": 7650.00,"marked_price": 12440.00,"description": "Mann bus oil filter","image": "https://i.imgur.com/tVNZKOw.jpeg"}
         ]
 
         spareparts = []
