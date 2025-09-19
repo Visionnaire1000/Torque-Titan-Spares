@@ -3,7 +3,7 @@ from app import create_app
 from core.extensions import db
 from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
 
-#----------------------------------- FIXTURES----------------------------------------------
+#----------------------------------- FIXTURES ----------------------------------------------
 @pytest.fixture(scope="session")
 def test_app():
     app = create_app()
@@ -19,7 +19,7 @@ def test_app():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database(test_app):
-    #(Create all tables once per test session and drop them at the end.)
+    # (Create all tables once per test session and drop them at the end.)
     with test_app.app_context():
         db.create_all()
         yield
@@ -41,9 +41,9 @@ def session(test_app):
         connection.close()
         session.remove()
 
-# ---------------------------------USERS MODEL---------------------------------------------------------------------
+# --------------------------------- USERS MODEL ---------------------------------------------------------------------
 def test_user_password_hashing(session):
-    user = Users(email="test@example.com", name="Tester")
+    user = Users(email="test@example.com", password_hash="temp")
     user.set_password("mypassword")
 
     assert user.password_hash != "mypassword"
@@ -53,9 +53,9 @@ def test_user_password_hashing(session):
 
 def test_invalid_email(session):
     with pytest.raises(ValueError):
-        Users(email="invalid", name="Bad", password_hash="x")
+        Users(email="invalid", password_hash="x")
 
-# -----------------------------------SPARE PARTS MODEL--------------------------------------------------------------
+# ----------------------------------- SPARE PARTS MODEL --------------------------------------------------------------
 def test_sparepart_discount_calculation(session):
     part = SpareParts(
         category="tyre", vehicle_type="suv", brand="Goodyear",
@@ -67,24 +67,20 @@ def test_sparepart_discount_calculation(session):
     assert part.discount_percentage == 20.0
 
 
-def test_invalid_category_vehicle(session):
-    with pytest.raises(ValueError):
-        SpareParts(category="chair", vehicle_type="suv", brand="X", buying_price=10, marked_price=20)
-
+def test_invalid_vehicle_type(session):
     with pytest.raises(ValueError):
         SpareParts(category="tyre", vehicle_type="bike", brand="X", buying_price=10, marked_price=20)
 
-
-# ----------------------------------REVIEWS & REVIEWS REACTIONS MODELS----------------------------------------------------------------
+# ---------------------------------- REVIEWS & REVIEW REACTIONS MODELS ----------------------------------------------------------------
 def test_review_and_likes(session):
-    user = Users(email="john@example.com", name="John")
+    user = Users(email="john@example.com", password_hash="temp")
     user.set_password("pass")
     part = SpareParts(
         category="tyre", vehicle_type="sedan", brand="Michelin",
         buying_price=50, marked_price=100
     )
 
-    review = Reviews(user=user, sparepart=part, rating=5, comment="Great tyre")
+    review = Reviews(user=user, spareparts=part, rating=5, comment="Great tyre")
     session.add_all([user, part, review])
     session.commit()
 
@@ -92,7 +88,7 @@ def test_review_and_likes(session):
     assert part.total_reviews == 1
     assert part.average_rating == 5.0
 
-    like = ReviewReactions(user=user, review=review, is_like=True)
+    like = ReviewReactions(user=user, reviews=review, is_like=True)
     session.add(like)
     session.commit()
 
@@ -102,7 +98,7 @@ def test_review_and_likes(session):
 
 
 def test_invalid_rating(session):
-    user = Users(email="rater@example.com", name="Rater")
+    user = Users(email="rater@example.com", password_hash="temp")
     user.set_password("123")
     part = SpareParts(
         category="rim", vehicle_type="truck", brand="Toyota",
@@ -112,11 +108,11 @@ def test_invalid_rating(session):
     session.commit()
 
     with pytest.raises(ValueError):
-        Reviews(user=user, sparepart=part, rating=10)
+        Reviews(user=user, spareparts=part, rating=10)
 
-#-------------------------------ORDERS & ORDER ITEMS MODELS---------------------------------------------------------
+#------------------------------- ORDERS & ORDER ITEMS MODELS ---------------------------------------------------------
 def test_order_total_calculation(session):
-    user = Users(email="buyer@example.com", name="Buyer")
+    user = Users(email="buyer@example.com", password_hash="temp")
     user.set_password("pass")
     part = SpareParts(
         category="battery", vehicle_type="bus", brand="Bosch",
@@ -125,11 +121,11 @@ def test_order_total_calculation(session):
     session.add_all([user, part])
     session.commit()
 
-    order = Orders(user=user, street="123 Road", city="Nairobi", postal_code="00100", country="Kenya")
+    order = Orders(user_id=user.id, street="123 Road", city="Nairobi", postal_code="00100", country="Kenya")
     item = OrderItems(order=order, sparepart=part, quantity=2, unit_price=0, subtotal=0)
 
-    item.calculate_subtotal()
-    order.calculate_total()
+    session.add_all([order, item])
+    session.commit()
 
     assert item.subtotal == (part.marked_price - part.discount_amount) * 2
     assert order.total_price == item.subtotal

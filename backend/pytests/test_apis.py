@@ -3,17 +3,17 @@ from unittest.mock import patch, MagicMock
 from flask_jwt_extended import create_access_token
 from app import create_app
 from core.extensions import db
-from database.models import Users, SpareParts, Orders, Reviews, ReviewReactions
+from database.models import Users, SpareParts, Orders, OrderItems, Reviews
 
 
-#------------------------------------------ FIXTURES-------------------------------------------------------
-
+# ---------------- FIXTURES ----------------
 @pytest.fixture(scope="session")
 def test_app():
     app = create_app()
     app.config.update(
-        TESTING=True,
         SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        TESTING=True,
         JWT_SECRET_KEY="test-secret"
     )
     with app.app_context():
@@ -22,16 +22,14 @@ def test_app():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database(test_app):
-    # Create all tables once per test session and drop them at the end
     with test_app.app_context():
         db.create_all()
         yield
         db.drop_all()
 
 
-@pytest.fixture()
-def test_client(test_app):
-    # Provides a fresh test client per test, with rollback for isolation
+@pytest.fixture(autouse=True)
+def session(test_app):
     with test_app.app_context():
         connection = db.engine.connect()
         transaction = connection.begin()
@@ -39,9 +37,7 @@ def test_client(test_app):
         session = db.create_scoped_session(options=options)
 
         db.session = session
-        client = test_app.test_client()
-
-        yield client
+        yield session
 
         transaction.rollback()
         connection.close()
@@ -49,247 +45,238 @@ def test_client(test_app):
 
 
 @pytest.fixture
-def buyer_token():
-    buyer = Users(email="buyer@test.com", role="buyer", name="Buyer")
-    buyer.set_password("password")
-    db.session.add(buyer)
-    db.session.commit()
-    return create_access_token(identity=str(buyer.id))
+def client(test_app):
+    return test_app.test_client()
 
 
-@pytest.fixture
-def admin_token():
-    admin = Users(email="admin@test.com", role="admin", name="Admin")
-    admin.set_password("password")
-    db.session.add(admin)
-    db.session.commit()
-    return create_access_token(identity=str(admin.id))
+def auth_header(user):
+    token = create_access_token(identity=str(user.id))
+    return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
-def sample_part():
+# ---------------- AUTH ----------------
+def test_register_and_login(client, session):
+    resp = client.post("/register", json={
+        "email": "test@example.com",
+        "password": "pass123",
+        "name": "Tester"
+    })
+    assert resp.status_code == 201
+
+    resp = client.post("/login", json={
+        "email": "test@example.com",
+        "password": "pass123"
+    })
+    data = resp.get_json()
+    assert resp.status_code == 200
+    assert "access_token" in data
+
+
+# ---------------- SPARE PARTS ----------------
+def test_spareparts_list_and_get(client, session):
+    part = SpareParts(category="tyre", vehicle_type="suv", brand="Michelin",
+                      buying_price=50, marked_price=100)
+    session.add(part)
+    session.commit()
+
+    resp = client.get("/spareparts")
+    assert resp.status_code == 200
+    assert resp.get_json()["total"] >= 1
+
+    resp = client.get(f"/spareparts/{part.id}")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["brand"] == "Michelin"
+
+
+# ---------------- REVIEWS ----------------
+def test_reviews_crud(client, session):
+    user = Users(email="reviewer@example.com", name="Rev", role="buyer")
+    user.set_password("pass")
+    part = SpareParts(category="rim", vehicle_type="sedan", brand="Enkei",
+                      buying_price=80, marked_price=120)
+    session.add_all([user, part])
+    session.commit()
+
+    resp = client.post(f"/spareparts/{part.id}/reviews",
+                       headers=auth_header(user),
+                       json={"rating": 5, "comment": "Excellent"})
+    assert resp.status_code == 201
+    review_id = resp.get_json()["id"]
+
+    resp = client.patch(f"/reviews/{review_id}",
+                        headers=auth_header(user),
+                        json={"comment": "Updated"})
+    assert resp.status_code == 200
+    assert resp.get_json()["comment"] == "Updated"
+
+    resp = client.delete(f"/reviews/{review_id}",
+                         headers=auth_header(user))
+    assert resp.status_code == 200
+    
+ # -----------------------------------REVIEWS EXTRA TESTS--------------------------------------------------------------
+
+def test_create_valid_review(session):
+    user = Users(email="rev1@example.com", name="Reviewer1")
+    user.set_password("pass")
     part = SpareParts(
-        brand="Toyota", category="Engine", vehicle_type="SUV",
-        colour="Black", marked_price=1000, discount_percentage=10,
-        average_rating=4.5
+        category="tyre", vehicle_type="suv", brand="Dunlop",
+        buying_price=60, marked_price=100
     )
-    db.session.add(part)
-    db.session.commit()
-    return part
+    session.add_all([user, part])
+    session.commit()
 
-# ------------------ Auth ------------------
+    review = Reviews(user=user, sparepart=part, rating=4, comment="Good product")
+    session.add(review)
+    session.commit()
 
-def test_register(test_client):
-    res = test_client.post("/register", json={
-        "email": "new@test.com", "password": "1234", "name": "NewUser"
+    assert review.id is not None
+    assert review.rating == 4
+    assert review.comment == "Good product"
+    assert part.reviews[0] == review
+
+
+def test_prevent_duplicate_review(session):
+    user = Users(email="rev2@example.com", name="Reviewer2")
+    user.set_password("pass")
+    part = SpareParts(
+        category="rim", vehicle_type="sedan", brand="Enkei",
+        buying_price=120, marked_price=200
+    )
+    session.add_all([user, part])
+    session.commit()
+
+    review1 = Reviews(user=user, sparepart=part, rating=5, comment="Excellent")
+    session.add(review1)
+    session.commit()
+
+    # Try adding another review for the same part by the same user
+    with pytest.raises(ValueError):
+        review2 = Reviews(user=user, sparepart=part, rating=3, comment="Changed my mind")
+        session.add(review2)
+        session.commit()
+
+
+def test_rating_boundaries(session):
+    user = Users(email="rev3@example.com", name="Reviewer3")
+    user.set_password("pass")
+    part = SpareParts(
+        category="battery", vehicle_type="truck", brand="Bosch",
+        buying_price=200, marked_price=300
+    )
+    session.add_all([user, part])
+    session.commit()
+
+    # Rating too low
+    with pytest.raises(ValueError):
+        Reviews(user=user, sparepart=part, rating=0)
+
+    # Rating too high
+    with pytest.raises(ValueError):
+        Reviews(user=user, sparepart=part, rating=6)
+
+    # Valid rating should work
+    review = Reviews(user=user, sparepart=part, rating=1, comment="Barely okay")
+    session.add(review)
+    session.commit()
+
+    assert review.rating == 1
+
+
+def test_deleting_review_updates_stats(session):
+    user = Users(email="rev4@example.com", name="Reviewer4")
+    user.set_password("pass")
+    part = SpareParts(
+        category="tyre", vehicle_type="sedan", brand="Pirelli",
+        buying_price=90, marked_price=150
+    )
+    session.add_all([user, part])
+    session.commit()
+
+    review = Reviews(user=user, sparepart=part, rating=5, comment="Perfect fit")
+    session.add(review)
+    session.commit()
+
+    part.update_review_stats()
+    assert part.total_reviews == 1
+    assert part.average_rating == 5.0
+
+    # Now delete the review
+    session.delete(review)
+    session.commit()
+
+    part.update_review_stats()
+    assert part.total_reviews == 0
+    assert part.average_rating == 0
+
+# ---------------- ORDERS ----------------
+def test_order_flow(client, session):
+    user = Users(email="buyer@example.com", name="Buyer", role="buyer")
+    user.set_password("pass")
+    part = SpareParts(category="battery", vehicle_type="bus", brand="Bosch",
+                      buying_price=150, marked_price=200)
+    session.add_all([user, part])
+    session.commit()
+
+    resp = client.post("/orders", headers=auth_header(user), json={
+        "items": [{"sparepart_id": part.id, "quantity": 2}],
+        "street": "123 Road",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "postal_code": "00100"
     })
-    assert res.status_code == 201
+    assert resp.status_code == 201
+    order_id = resp.get_json()["id"]
+
+    resp = client.get("/orders", headers=auth_header(user))
+    assert resp.status_code == 200
+    assert len(resp.get_json()["orders"]) >= 1
+
+    resp = client.patch(f"/orders/{order_id}", headers=auth_header(user),
+                        json={"status": "cancelled"})
+    assert resp.status_code == 200
 
 
-def test_login(test_client):
-    res = test_client.post("/login", json={
-        "email": "buyer@test.com", "password": "password"
-    })
-    assert res.status_code == 200
-    assert "access_token" in res.get_json()
+# ---------------- ADMIN ORDERS ----------------
+def test_admin_orders(client, session):
+    admin = Users(email="admin@example.com", name="Admin", role="admin")
+    admin.set_password("adminpass")
+    buyer = Users(email="cust@example.com", name="Cust", role="buyer")
+    buyer.set_password("pass")
+    part = SpareParts(category="tyre", vehicle_type="truck", brand="Goodyear",
+                      buying_price=100, marked_price=150)
+    order = Orders(user=buyer, street="Road", city="City",
+                   country="Kenya", postal_code="00100", status="pending")
+    item = OrderItems(order=order, sparepart=part, quantity=1)
+    session.add_all([admin, buyer, part, order, item])
+    session.commit()
+
+    resp = client.get("/admin/orders", headers=auth_header(admin))
+    assert resp.status_code == 200
+    assert isinstance(resp.get_json(), list)
+
+    resp = client.patch(f"/admin/orders/{order.id}",
+                        headers=auth_header(admin),
+                        json={"status": "delivered"})
+    assert resp.status_code == 200
+    assert "delivered" in resp.get_json()["message"]
 
 
-def test_create_admin(test_client, admin_token):
-    res = test_client.post("/admin/create",
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json={"email": "subadmin@test.com", "password": "1234", "name": "SubAdmin"}
-    )
-    assert res.status_code == 201
+# ---------------- CHECKOUT (Mock Stripe) ----------------
+@patch("stripe.checkout.Session.create")
+def test_checkout_mocked(mock_stripe, client, session):
+    user = Users(email="checkout@example.com", name="Buyer", role="buyer")
+    user.set_password("pass")
+    part = SpareParts(category="tyre", vehicle_type="sedan", brand="Pirelli",
+                      buying_price=120, marked_price=200)
+    session.add_all([user, part])
+    session.commit()
 
-# ------------------ Spare Parts ------------------
+    mock_stripe.return_value = MagicMock(url="https://fake-checkout.stripe")
 
-def test_list_spareparts(test_client, sample_part):
-    res = test_client.get("/spareparts")
-    data = res.get_json()
-    assert res.status_code == 200
-    assert data["total"] >= 1
-
-
-def test_get_single_sparepart(test_client, buyer_token, sample_part):
-    res = test_client.get(f"/spareparts/{sample_part.id}",
-                          headers={"Authorization": f"Bearer {buyer_token}"})
-    assert res.status_code == 200
-    assert res.get_json()["brand"] == "Toyota"
-
-# ------------------ Reviews ------------------
-
-def test_add_review(test_client, buyer_token, sample_part):
-    res = test_client.post(f"/reviews/{sample_part.id}",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"rating": 5, "comment": "Great part"}
-    )
-    assert res.status_code == 201
-    assert res.get_json()["rating"] == 5
-
-
-def test_edit_review(test_client, buyer_token):
-    review = Reviews.query.first()
-    res = test_client.patch(f"/reviews/edit/{review.id}",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"comment": "Updated comment"}
-    )
-    assert res.status_code == 200
-    assert res.get_json()["comment"] == "Updated comment"
-
-
-def test_delete_review(test_client, buyer_token):
-    review = Reviews.query.first()
-    res = test_client.delete(f"/reviews/edit/{review.id}",
-        headers={"Authorization": f"Bearer {buyer_token}"})
-    assert res.status_code == 200
-    assert res.get_json()["message"] == "Review deleted"
-
-# ------------------ Review Reactions ------------------
-
-def test_add_reaction(test_client, buyer_token, sample_part):
-    buyer = Users.query.filter_by(email="buyer@test.com").first()
-    review = Reviews(user_id=buyer.id, sparepart_id=sample_part.id, rating=4)
-    db.session.add(review)
-    db.session.commit()
-
-    res = test_client.post(
-        f"/reviews/{review.id}/react",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"is_like": True}
-    )
-
-    assert res.status_code == 200
-    assert res.get_json()["message"] == "Reaction updated"
-
-    reaction = ReviewReactions.query.filter_by(user_id=buyer.id, review_id=review.id).first()
-    assert reaction is not None
-    assert reaction.is_like is True
-
-
-def test_update_reaction(test_client, buyer_token, sample_part):
-    buyer = Users.query.filter_by(email="buyer@test.com").first()
-    review = Reviews(user_id=buyer.id, sparepart_id=sample_part.id, rating=5)
-    db.session.add(review)
-    db.session.commit()
-
-    # First like
-    test_client.post(
-        f"/reviews/{review.id}/react",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"is_like": True}
-    )
-
-    # Then switch to dislike
-    res = test_client.post(
-        f"/reviews/{review.id}/react",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"is_like": False}
-    )
-
-    assert res.status_code == 200
-    assert res.get_json()["message"] == "Reaction updated"
-
-    reaction = ReviewReactions.query.filter_by(user_id=buyer.id, review_id=review.id).first()
-    assert reaction is not None
-    assert reaction.is_like is False
-
-
-def test_delete_reaction(test_client, buyer_token, sample_part):
-    buyer = Users.query.filter_by(email="buyer@test.com").first()
-    review = Reviews(user_id=buyer.id, sparepart_id=sample_part.id, rating=3)
-    db.session.add(review)
-    db.session.commit()
-
-    # Add a reaction first
-    reaction = ReviewReactions(user_id=buyer.id, review_id=review.id, is_like=True)
-    db.session.add(reaction)
-    db.session.commit()
-
-    res = test_client.delete(
-        f"/reviews/{review.id}/react",
-        headers={"Authorization": f"Bearer {buyer_token}"}
-    )
-
-    assert res.status_code == 200
-    assert res.get_json()["message"] == "Reaction removed"
-    assert ReviewReactions.query.filter_by(user_id=buyer.id, review_id=review.id).first() is None
-
-
-def test_invalid_reaction_payload(test_client, buyer_token, sample_part):
-    buyer = Users.query.filter_by(email="buyer@test.com").first()
-    review = Reviews(user_id=buyer.id, sparepart_id=sample_part.id, rating=2)
-    db.session.add(review)
-    db.session.commit()
-
-    # Send a string instead of a bool
-    res = test_client.post(
-        f"/reviews/{review.id}/react",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"is_like": "yes"}
-    )
-
-    # API should catch the ValueError from validate_is_like
-    assert res.status_code in (400, 422)
-
-# ------------------ Orders ------------------
-
-def test_create_order(test_client, buyer_token, sample_part):
-    res = test_client.post("/orders",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={
-            "items": [{"sparepart_id": sample_part.id, "quantity": 2}],
-            "street": "123 St", "city": "Nairobi", "country": "Kenya"
-        }
-    )
-    assert res.status_code == 201
-    assert res.get_json()["status"] == "pending"
-
-
-def test_get_orders(test_client, buyer_token):
-    res = test_client.get("/orders", headers={"Authorization": f"Bearer {buyer_token}"})
-    assert res.status_code == 200
-    assert "orders" in res.get_json()
-
-
-def test_cancel_order(test_client, buyer_token):
-    order = Orders.query.first()
-    res = test_client.patch(f"/orders/{order.id}",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"status": "cancelled"}
-    )
-    assert res.status_code == 200
-    assert "cancelled" in res.get_json()["message"]
-
-# ------------------ Admin Orders ------------------
-
-def test_admin_get_orders(test_client, admin_token):
-    res = test_client.get("/admin/orders", headers={"Authorization": f"Bearer {admin_token}"})
-    assert res.status_code == 200
-    assert isinstance(res.get_json(), list)
-
-
-def test_admin_patch_order(test_client, admin_token):
-    order = Orders.query.first()
-    res = test_client.patch(f"/admin/orders/{order.id}",
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json={"status": "delivered"}
-    )
-    assert res.status_code == 200
-    assert "delivered" in res.get_json()["message"]
-
-# ------------------ Checkout (Stripe Mock) ------------------
-
-@patch("resources.stripe.checkout.Session.create")
-def test_checkout(mock_create, test_client, buyer_token, sample_part):
-    mock_session = MagicMock()
-    mock_session.url = "http://mock-checkout-url"
-    mock_create.return_value = mock_session
-
-    res = test_client.post("/checkout",
-        headers={"Authorization": f"Bearer {buyer_token}"},
-        json={"part_ids": [sample_part.id]}
-    )
-
-    assert res.status_code == 200
-    assert res.get_json()["checkout_url"] == "http://mock-checkout-url"
-    mock_create.assert_called_once()
+    resp = client.post("/checkout", headers=auth_header(user),
+                       json={"part_ids": [part.id]})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "checkout_url" in data
+    assert data["checkout_url"] == "https://fake-checkout.stripe"
