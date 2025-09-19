@@ -12,19 +12,22 @@ import stripe
 class Register(Resource):
     def post(self):
         data = request.get_json()
-        email, password, name = data.get('email'), data.get('password'), data.get('name')
+        email, password = data.get('email'), data.get('password')
 
-        if not all([email, password, name]):
+        if not all([email, password]):
             return {"error": "Missing required fields"}, 400
+
         if Users.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 409
 
-        user = Users(email=email, role='buyer', name=name)
+        # Create user and hash password
+        user = Users(email=email, role='buyer')
         user.set_password(password)
+
         db.session.add(user)
         db.session.commit()
-        return {"message": "Buyer account created"}, 201
 
+        return {"message": "Buyer account created"}, 201
 
 class Login(Resource):
     def post(self):
@@ -57,17 +60,17 @@ class CreateAdmin(Resource):
 
 
 # ------------------ Spare Parts ------------------
-class SpareParts(Resource):
-    @jwt_required(optional=True)
-    def get(self, part_id):
-        part = SpareParts.query.get_or_404(part_id)
-        result = part.to_dict()
-        result['reviews'] = [r.to_dict() for r in part.reviews]
-        return result, 200
-
-
 class SparePartsList(Resource):
-    def get(self):
+    @jwt_required(optional=True)
+    def get(self, part_id=None):
+        # --------- If part_id is provided, return single spare part ---------
+        if part_id:
+            part = SpareParts.query.get_or_404(part_id)
+            result = part.to_dict()
+            result['reviews'] = [r.to_dict() for r in part.reviews]
+            return result, 200
+
+        # --------- Otherwise, return list of spare parts ---------
         args = request.args
         page = args.get("page", 1, type=int)
         per_page = args.get("per_page", 16, type=int)
@@ -89,7 +92,12 @@ class SparePartsList(Resource):
         if sort == "discount":
             query = query.order_by(desc(SpareParts.discount_percentage)).limit(16)
             items = query.all()
-            return {"items": [p.to_dict() for p in items], "total": len(items), "page": 1, "pages": 1}, 200
+            return {
+                "items": [p.to_dict() for p in items],
+                "total": len(items),
+                "page": 1,
+                "pages": 1
+            }, 200
         elif sort == "price_high":
             query = query.order_by(desc(SpareParts.marked_price))
         elif sort == "price_low":
@@ -113,10 +121,9 @@ class SparePartsList(Resource):
             "page": pagination.page,
             "pages": pagination.pages
         }, 200
-
-
+    
 # ------------------ Reviews ------------------
-class Reviews(Resource):
+class ReviewsResource(Resource):
     @jwt_required()
     def post(self, part_id):
         current_user_id = get_jwt_identity()
@@ -155,7 +162,7 @@ class Reviews(Resource):
         return {"message": "Review deleted"}, 200
 
 
-class ReviewReactions(Resource):
+class ReviewReactionsResource(Resource):
     @jwt_required()
     def post(self, review_id):
         current_user_id = get_jwt_identity()
@@ -211,7 +218,8 @@ class Checkout(Resource):
             cancel_url=Config.STRIPE_CANCEL_URL,
         )
         return {'checkout_url': session.url}, 200
-class Orders(Resource):
+    
+class OrdersResource(Resource):
     @jwt_required()
     def post(self):
         current_user = Users.query.get(get_jwt_identity())
