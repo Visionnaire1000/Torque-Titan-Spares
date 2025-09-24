@@ -188,27 +188,42 @@ class ReviewReactionsResource(Resource):
 
 
 # ------------------ Orders ------------------
-
 class Checkout(Resource):
     @jwt_required()
     def post(self):
         data = request.get_json()
+        items = data.get('items', [])  # support test format
         part_ids = data.get('part_ids', [])
-        if not part_ids:
+
+        if not items and not part_ids:
             return {"error": "No spare parts selected"}, 400
 
         line_items = []
-        for pid in part_ids:
-            part = SpareParts.query.get_or_404(pid)
-            price = int((part.marked_price - part.discount_amount) * 100)
-            line_items.append({
-                'price_data': {
-                    'currency': 'Ksh',
-                    'product_data': {'name': f"{part.brand} {part.category}"},
-                    'unit_amount': price
-                },
-                'quantity': 1
-            })
+
+        if items:
+            for item in items:
+                part = SpareParts.query.get_or_404(item["part_id"])
+                price = int((part.marked_price - part.discount_amount) * 100)
+                line_items.append({
+                    'price_data': {
+                        'currency': 'Ksh',
+                        'product_data': {'name': f"{part.brand} {part.category}"},
+                        'unit_amount': price
+                    },
+                    'quantity': item.get("quantity", 1)
+                })
+        else:  # fallback to simple list
+            for pid in part_ids:
+                part = SpareParts.query.get_or_404(pid)
+                price = int((part.marked_price - part.discount_amount) * 100)
+                line_items.append({
+                    'price_data': {
+                        'currency': 'Ksh',
+                        'product_data': {'name': f"{part.brand} {part.category}"},
+                        'unit_amount': price
+                    },
+                    'quantity': 1
+                })
 
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -218,7 +233,7 @@ class Checkout(Resource):
             cancel_url=Config.STRIPE_CANCEL_URL,
         )
         return {'checkout_url': session.url}, 200
-    
+   
 class OrdersResource(Resource):
     @jwt_required()
     def post(self):
