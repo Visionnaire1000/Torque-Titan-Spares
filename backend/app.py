@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_cors import  CORS
+from flask_restful import Api
 from core.config import Config
-from core.extensions import db, bcrypt, jwt, migrate, api
+from core.extensions import db, bcrypt, jwt, migrate
 from apis.routes import register_routes
 from apis.stripe import init_stripe
 
@@ -14,7 +15,7 @@ def create_app(config_class=Config):
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    api.init_app(app)
+    api = Api(app) 
 
     # CORS
     CORS(app, resources={r"/*": {"origins": app.config["FRONTEND_URL"]}})

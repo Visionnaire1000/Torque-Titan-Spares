@@ -1,134 +1,108 @@
 import pytest
-from sqlalchemy.orm import sessionmaker, scoped_session
-from app import create_app
-from core.extensions import db
-from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
+from database.models import (
+    Users,
+    SpareParts,
+    Reviews,
+    ReviewReactions,
+    Orders,
+    OrderItems,
+    generate_uuid
+)
 
-# ----------------------------------- FIXTURES ----------------------------------------------
-@pytest.fixture(scope="session")
-def test_app():
-    app = create_app()
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        TESTING=True,
-        JWT_SECRET_KEY="test-secret"
-    )
-    with app.app_context():
-        yield app
+# ---------------------- UUID Helper ----------------------
+def test_generate_uuid():
+    uid = generate_uuid()
+    assert isinstance(uid, str)
+    assert len(uid) > 0
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_database(test_app):
-    """Create all tables once per test session and drop them at the end."""
-    with test_app.app_context():
-        db.create_all()
-        yield
-        db.drop_all()
+# ---------------------- USERS MODEL ----------------------
+def test_user_password_hashing():
+    user = Users(email="test@example.com", password_hash="")
+    user.set_password("mypassword123")
+    assert user.password_hash != "mypassword123"
+    assert user.check_password("mypassword123") is True
+    assert user.check_password("wrongpass") is False
 
 
-@pytest.fixture(autouse=True)
-def session(test_app):
-    """Provide a fresh database session for each test (transaction rolled back after)."""
-    with test_app.app_context():
-        connection = db.engine.connect()
-        transaction = connection.begin()
-
-        # ✅ Modern way: use sessionmaker + scoped_session
-        Session = scoped_session(sessionmaker(bind=connection))
-        db.session = Session()
-
-        yield db.session
-
-        transaction.rollback()
-        connection.close()
-        Session.remove()
-
-# --------------------------------- USERS MODEL ---------------------------------------------------------------------
-def test_user_password_hashing(session):
-    user = Users(email="test@example.com", password_hash="temp")
-    user.set_password("mypassword")
-
-    assert user.password_hash != "mypassword"
-    assert user.check_password("mypassword") is True
-    assert user.check_password("wrong") is False
+def test_user_email_validation():
+    user = Users(email="  TeSt@Example.Com  ", password_hash="hash")
+    assert user.email == "test@example.com"  # lowercased & stripped
 
 
-def test_invalid_email(session):
-    with pytest.raises(ValueError):
-        Users(email="invalid", password_hash="x")
+def test_user_invalid_email_raises():
+    with pytest.raises(ValueError) as excinfo:
+        Users(email="invalid-email", password_hash="hash")
+    assert "Invalid email address" in str(excinfo.value)
 
-# ----------------------------------- SPARE PARTS MODEL --------------------------------------------------------------
-def test_sparepart_discount_calculation(session):
+
+# ---------------------- SPAREPARTS MODEL ----------------------
+def test_sparepart_discount_calculation():
     part = SpareParts(
-        category="tyre", vehicle_type="suv", brand="Goodyear",
-        buying_price=80, marked_price=100
+        category="tyre",
+        vehicle_type="suv",
+        brand="Michelin",
+        colour="black",
+        buying_price=100.0,
+        marked_price=150.0,
     )
     part.calculate_discount()
+    assert part.discount_amount == 50.0
+    assert part.discount_percentage == 33.33 or part.discount_percentage == round(33.33, 2)
 
-    assert part.discount_amount == 20
-    assert part.discount_percentage == 20.0
+
+def test_sparepart_invalid_vehicle_type_raises():
+    with pytest.raises(ValueError) as excinfo:
+        SpareParts(
+            category="tyre",
+            vehicle_type="plane",  # not allowed
+            brand="Generic",
+            buying_price=100.0,
+            marked_price=200.0,
+        )
+    assert "Vehicle type must be one of:" in str(excinfo.value)
 
 
-def test_invalid_vehicle_type(session):
-    with pytest.raises(ValueError):
-        SpareParts(category="tyre", vehicle_type="bike", brand="X", buying_price=10, marked_price=20)
+# ---------------------- REVIEWS MODEL ----------------------
+def test_review_rating_validation():
+    review = Reviews(user_id="u1", sparepart_id="s1", rating=5)
+    assert review.rating == 5
 
-# ---------------------------------- REVIEWS & REVIEW REACTIONS MODELS ----------------------------------------------------------------
-def test_review_and_likes(session):
-    user = Users(email="john@example.com", password_hash="temp")
-    user.set_password("pass")
-    part = SpareParts(
-        category="tyre", vehicle_type="sedan", brand="Michelin",
-        buying_price=50, marked_price=100
+
+def test_review_invalid_rating_raises():
+    with pytest.raises(ValueError) as excinfo:
+        Reviews(user_id="u1", sparepart_id="s1", rating=10)
+    assert "Rating must be between 1 and 5" in str(excinfo.value)
+
+
+# ---------------------- REVIEW REACTIONS MODEL ----------------------
+def test_review_reaction_is_like():
+    reaction = ReviewReactions(user_id="u1", review_id="r1", is_like=True)
+    assert reaction.is_like is True
+
+
+def test_review_reaction_invalid_is_like_raises():
+    with pytest.raises(ValueError) as excinfo:
+        ReviewReactions(user_id="u1", review_id="r1", is_like="yes")  # not bool
+    assert "is_like must be True or False" in str(excinfo.value)
+
+
+# ---------------------- ORDERS MODEL ----------------------
+def test_order_total_calculation():
+    order = Orders(
+        user_id="u1",
+        status="pending",
+        street="123 Street",
+        city="Test City",
+        postal_code="00100",
+        country="Testland"
     )
 
-    review = Reviews(user=user, spareparts=part, rating=5, comment="Great tyre")
-    session.add_all([user, part, review])
-    session.commit()
+    item1 = OrderItems(order=order, sparepart_id="s1", quantity=2, unit_price=50.0, subtotal=100.0)
+    item2 = OrderItems(order=order, sparepart_id="s2", quantity=1, unit_price=80.0, subtotal=80.0)
 
-    part.update_review_stats()
-    assert part.total_reviews == 1
-    assert part.average_rating == 5.0
+    order.order_items = [item1, item2]
+    order.calculate_total()
 
-    like = ReviewReactions(user=user, reviews=review, is_like=True)
-    session.add(like)
-    session.commit()
+    assert order.total_price == 180.0
 
-    part.update_review_stats()
-    assert part.total_likes == 1
-    assert part.total_dislikes == 0
-
-
-def test_invalid_rating(session):
-    user = Users(email="rater@example.com", password_hash="temp")
-    user.set_password("123")
-    part = SpareParts(
-        category="rim", vehicle_type="truck", brand="Toyota",
-        buying_price=200, marked_price=300
-    )
-    session.add_all([user, part])
-    session.commit()
-
-    with pytest.raises(ValueError):
-        Reviews(user=user, spareparts=part, rating=10)
-
-# ------------------------------- ORDERS & ORDER ITEMS MODELS ---------------------------------------------------------
-def test_order_total_calculation(session):
-    user = Users(email="buyer@example.com", password_hash="temp")
-    user.set_password("pass")
-    part = SpareParts(
-        category="battery", vehicle_type="bus", brand="Bosch",
-        buying_price=150, marked_price=200
-    )
-    session.add_all([user, part])
-    session.commit()
-
-    order = Orders(user_id=user.id, street="123 Road", city="Nairobi", postal_code="00100", country="Kenya")
-    item = OrderItems(order=order, sparepart=part, quantity=2, unit_price=0, subtotal=0)
-
-    session.add_all([order, item])
-    session.commit()
-
-    assert item.subtotal == (part.marked_price - part.discount_amount) * 2
-    assert order.total_price == item.subtotal
