@@ -119,7 +119,7 @@ const handleSelectChange = (selectedOption) => {
   placeholder="Search item..."
   isClearable
   inputValue={inputValue}
-  components={{ Option: CustomOption }}  // <-- custom option here
+  components={{ Option: CustomOption }}  
   styles={{
     container: (base) => ({
       ...base,

@@ -1,0 +1,22 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%; 
+  height: 100%; 
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  margin-top: 70px; 
+  padding-bottom: 70px;
+}
+
+.content-wrapper {
+  min-height: 100vh; 
+  padding-bottom: 70px; 
+}
