@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { ShoppingCart, Menu } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { components } from 'react-select';
+import config from '../config';
 import '../styles/navbar.css';
 
 const Navbar = () => {
@@ -16,7 +17,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:3000/spareParts')
+    fetch(`${config.API_BASE_URL}/spareparts`)
       .then(res => res.json())
       .then(data => {
         setAllItems(data);
