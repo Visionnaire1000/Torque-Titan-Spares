@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('[AuthProvider] useEffect start');
     try {
-      const stored = localStorage.getItem('farmartUser');
+      const stored = localStorage.getItem('titanUser');
       console.log('[AuthProvider] storedUser:', stored);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('[AuthProvider] error reading localStorage:', err);
-      localStorage.removeItem('farmartUser');
+      localStorage.removeItem('titanUser');
     } finally {
       setIsLoading(false);
       console.log('[AuthProvider] isLoading → false');
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         role: data.role,
         token: data.access_token,
       };
-      localStorage.setItem('farmartUser', JSON.stringify(userInfo));
+      localStorage.setItem('titanUser', JSON.stringify(userInfo));
       setUser(userInfo);
       toast.success('Logged in successfully');
     } catch (err) {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     console.log('[AuthProvider] logout()');
-    localStorage.removeItem('farmartUser');
+    localStorage.removeItem('titanUser');
     setUser(null);
     toast.success('Logged out');
   };
