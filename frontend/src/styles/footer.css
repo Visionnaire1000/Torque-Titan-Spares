@@ -1,0 +1,80 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.footer {
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgb(0,64,128);
+  padding: 0.8rem 1.5rem;
+  color: white;
+  z-index: 1000;
+  box-sizing: border-box;
+  transition: transform 0.3s ease-in-out;
+  transform: translateY(100%);
+  bottom: 0;
+  margin-left: -50px;
+  margin-right: -50px;
+}
+
+
+ul {
+  list-style-type: none; 
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.socials p{
+  font-size: medium;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.socials i{
+  margin-right: 20px;
+}
+
+.socials i:hover{
+  color: rgb(0,255,80);
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 100px;
+}
+
+.contacts h5{
+   font-size: medium;
+}
+.contacts li{
+  list-style-type: none;
+}
+
+.policies p{
+  cursor: pointer;
+}
+.policies p:hover{
+  color: rgb(0,255,80);
+}
+.footer a{
+  color: white;
+  margin-right: 2px;
+}
+
+.bottomBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
