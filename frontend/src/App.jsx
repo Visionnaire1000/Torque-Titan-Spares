@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 import { CartProvider } from "./contexts/CartContext";
 
 //pages
+import Register from "./components/Register";
 import Homepage from "./components/Homepage";
 
 //style
@@ -22,6 +23,7 @@ function App() {
           <Navbar />
           <main className="flex-1">
             <Routes>
+              <Route path="/register" element={<Register />} /> 
               <Route path="/" element={<Homepage />} />
             </Routes>
           </main>
