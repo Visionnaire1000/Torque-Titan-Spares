@@ -27,13 +27,13 @@ const Login = () => {
   return (
     <div className="login-container">
       <div className="login-card">
-          <p className="registers">Sign in to your Farmart account</p>
+          <p className="registers">Sign in to your account</p>
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-container">
             <input
               id="email"
               type="email"
-              placeholder="your.email@example.com"
+              placeholder="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
