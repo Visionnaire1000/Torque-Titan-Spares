@@ -1,11 +1,16 @@
-import { BrowserRouter as Router} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import 'react-toastify/dist/ReactToastify.css';
 
 //layout
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 //contexts
 import { CartProvider } from "./contexts/CartContext";
+
+//pages
+import Homepage from "./components/Homepage";
+
 //style
 import "./App.css";
 
@@ -15,6 +20,11 @@ function App() {
       <Router>
         <div className="min-h-screen flex flex-col font-sans">
           <Navbar />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Homepage />} />
+            </Routes>
+          </main>
           <Footer />
         </div>
       </Router>
