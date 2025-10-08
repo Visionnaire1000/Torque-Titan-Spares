@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/*import { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import config from '../config';
 import { toast } from 'react-toastify';
@@ -110,6 +110,119 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAuthenticated: !!user,
         isFarmer: user?.role === 'farmer',
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be inside AuthProvider');
+  }
+  return ctx;
+};   */
+
+import { createContext, useContext, useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import config from '../config';
+import { toast } from 'react-toastify';
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) => {
+  console.log('[AuthProvider] render'); 
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('[AuthProvider] useEffect start');
+    try {
+      const stored = localStorage.getItem('titanUser');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+      }
+    } catch (err) {
+      console.error('[AuthProvider] error reading localStorage:', err);
+      localStorage.removeItem('titanUser');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const login = async (email, password) => {
+    console.log('[AuthProvider] login()', { email });
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.access_token) {
+        throw new Error(data.error || 'No access_token');
+      }
+
+      const decoded = jwtDecode(data.access_token);
+      const userInfo = {
+        id: decoded.sub,
+        email,
+        token: data.access_token,
+      };
+
+      localStorage.setItem('titanUser', JSON.stringify(userInfo));
+      setUser(userInfo);
+      toast.success('Logged in successfully');
+    } catch (err) {
+      console.error('[AuthProvider] login error:', err);
+      toast.error(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (email, password) => {
+    console.log('[AuthProvider] register()', { email });
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      toast.success('Registration successful');
+    } catch (err) {
+      console.error('[AuthProvider] register error:', err);
+      toast.error(err.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('titanUser');
+    setUser(null);
+    toast.success('Logged out');
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
       }}
     >
       {children}
