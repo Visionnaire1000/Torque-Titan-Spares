@@ -7,36 +7,47 @@ from database.models import Users, SpareParts, Orders, OrderItems, Reviews, Revi
 from core.config import Config
 import stripe
 
-
 # ------------------ Auth ------------------
 class Register(Resource):
     def post(self):
         data = request.get_json()
-        email, password = data.get('email'), data.get('password')
+        email = data.get('email')
+        password = data.get('password')
 
-        if not all([email, password]):
-            return {"error": "Missing required fields"}, 400
+        if not email or not password:
+            return {"error": "Email and password are required"}, 400
 
         if Users.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 409
 
         # Create user and hash password
-        user = Users(email=email, role='buyer')
+        user = Users(email=email)
         user.set_password(password)
 
         db.session.add(user)
         db.session.commit()
 
-        return {"message": "Buyer account created"}, 201
+        return {"status": "success", "message": "Account created successfully"}, 201
+
 
 class Login(Resource):
     def post(self):
         data = request.get_json()
-        email, password = data.get('email'), data.get('password')
+        email = data.get('email')
+        password = data.get('password')
+
+        if not email or not password:
+            return {"error": "Email and password are required"}, 400
+
         user = Users.query.filter_by(email=email).first()
+
         if user and user.check_password(password):
             token = create_access_token(identity=str(user.id))
-            return {"access_token": token, "role": user.role}, 200
+            return {
+                "status": "success",
+                "access_token": token
+            }, 200
+
         return {"error": "Invalid credentials"}, 401
 
 
