@@ -52,3 +52,23 @@ function App() {
 }
 
 export default App;
+
+
+/*
+import Cart from "./components/Cart";
+import RoleProtectedRoute from "./components/RoleProtectedRoute"; // or wherever you put it
+
+<Routes>
+  <Route path="/register" element={<Register />} />
+  <Route path="/login" element={<Login />} />
+
+  <Route
+    path="/cart"
+    element={
+      <RoleProtectedRoute>
+        <Cart />
+      </RoleProtectedRoute>
+    }
+  />
+
+  {/* <Route path="/" element={<Homepage />} /> */
