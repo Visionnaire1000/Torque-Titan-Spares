@@ -31,7 +31,7 @@ class Register(Resource):
             db.session.rollback()
             print("Error registering user:", e)
             return {"error": "Internal server error"}, 500
-
+        
 class Login(Resource):
     def post(self):
         data = request.get_json()
@@ -46,7 +46,7 @@ class Login(Resource):
         if user and user.check_password(password):
             access_token = create_access_token(
                 identity=str(user.id),
-                fresh=True,  # Mark as fresh since it's from login
+                fresh=True,
                 expires_delta=timedelta(minutes=15)
             )
             refresh_token = create_refresh_token(
@@ -57,11 +57,12 @@ class Login(Resource):
             return {
                 "status": "success",
                 "access_token": access_token,
-                "refresh_token": refresh_token
+                "refresh_token": refresh_token,
+                "role": user.role  
             }, 200
 
         return {"error": "Invalid credentials"}, 401
-     
+ 
 class TokenRefresh(Resource):
     @jwt_required(refresh=True)
     def post(self):

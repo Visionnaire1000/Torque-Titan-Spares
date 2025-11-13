@@ -16,7 +16,7 @@ class Users(db.Model, SerializerMixin):
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-    role = db.Column(db.String, default="buyer")  # e.g., buyer,admin
+    role = db.Column(db.String, default="buyer")  #  buyer,super_admin,admin
 
     # -------------------------- RELATIONSHIPS --------------------------------
     orders = db.relationship("Orders", back_populates="users", cascade="all, delete-orphan")
