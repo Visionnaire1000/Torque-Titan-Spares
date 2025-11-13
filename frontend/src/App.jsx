@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import 'react-toastify/dist/ReactToastify.css';
+
+//  Toast Container import
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; 
 
 //layout
 import Navbar from "./components/Navbar";
@@ -11,13 +14,24 @@ import { CartProvider } from "./contexts/CartContext";
 //pages
 import Register from "./components/Register";
 import Login from "./components/Login";
-import Homepage from "./components/Homepage";
+//import Homepage from "./components/Homepage";
 
 //style
 import "./App.css";
 
 function App() {
   return (
+  <>
+    <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+      />
     <CartProvider>
       <Router>
         <div className="min-h-screen flex flex-col font-sans">
@@ -26,13 +40,14 @@ function App() {
             <Routes>
               <Route path="/register" element={<Register />} /> 
               <Route path="/login" element={<Login />} /> 
-              <Route path="/" element={<Homepage />} />
+             {/* <Route path="/" element={<Homepage />} />  */}
             </Routes>
           </main>
           <Footer />
         </div>
       </Router>
     </CartProvider>
+  </>
   );
 }
 

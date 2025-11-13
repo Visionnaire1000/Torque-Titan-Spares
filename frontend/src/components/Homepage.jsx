@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+/*import { useEffect, useState } from 'react';
 import { useCart } from '../contexts/CartContext'; 
 import { toast } from 'react-toastify';
 import '../styles/homepage.css';
@@ -9,7 +9,7 @@ const HomePage = () => {
   const { addItem } = useCart();
 
   useEffect(() => {
-    fetch('http://localhost:3000/spareParts')
+    fetch('http://localhost:8000/spareParts')
       .then(res => res.json())
       .then(data => setSpareParts(data))
       .catch(err => console.error('Error fetching parts:', err));
@@ -75,5 +75,5 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default HomePage;  */
 

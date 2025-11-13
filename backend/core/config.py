@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
 
 load_dotenv()
@@ -9,11 +10,15 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Secrets
-    SECRET_KEY = os.getenv("SECRET_KEY")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+
+    # Expiry times
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)   
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
     # CORS
-    FRONTEND_URL = os.getenv("FRONTEND_URL")
+    FRONTEND_URL = os.getenv("FRONTEND_ENDPOINT_URL")
 
     # Stripe
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")

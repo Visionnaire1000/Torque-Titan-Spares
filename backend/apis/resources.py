@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import request
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from datetime import timedelta
 from sqlalchemy import desc, asc, func
 from core.extensions import db
 from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
@@ -20,15 +21,16 @@ class Register(Resource):
         if Users.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 409
 
-        # Create user and hash password
-        user = Users(email=email)
-        user.set_password(password)
-
-        db.session.add(user)
-        db.session.commit()
-
-        return {"status": "success", "message": "Account created successfully"}, 201
-
+        try:
+            user = Users(email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            return {"status": "success", "message": "Account created successfully"}, 201
+        except Exception as e:
+            db.session.rollback()
+            print("Error registering user:", e)
+            return {"error": "Internal server error"}, 500
 
 class Login(Resource):
     def post(self):
@@ -42,14 +44,34 @@ class Login(Resource):
         user = Users.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
-            token = create_access_token(identity=str(user.id))
+            access_token = create_access_token(
+                identity=str(user.id),
+                fresh=True,  # Mark as fresh since it's from login
+                expires_delta=timedelta(minutes=15)
+            )
+            refresh_token = create_refresh_token(
+                identity=str(user.id),
+                expires_delta=timedelta(days=30)
+            )
+
             return {
                 "status": "success",
-                "access_token": token
+                "access_token": access_token,
+                "refresh_token": refresh_token
             }, 200
 
         return {"error": "Invalid credentials"}, 401
-
+     
+class TokenRefresh(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(
+            identity=current_user,
+            fresh=False,  # Not fresh since it's from refresh
+            expires_delta=timedelta(minutes=15)
+        )
+        return {"access_token": new_access_token}, 200
 
 class CreateAdmin(Resource):
     @jwt_required()
