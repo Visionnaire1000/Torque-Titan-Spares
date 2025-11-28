@@ -124,37 +124,44 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ------------------ Login ------------------
-  const login = async (email, password) => {
-    console.log('[AuthProvider] login()', { email });
-    setIsLoading(true);
+ const login = async (email, password) => {
+  console.log('[AuthProvider] login()', { email });
+  setIsLoading(true);
 
-    try {
-      const res = await authFetch(`${config.API_BASE_URL}/login`, {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const res = await authFetch(`${config.API_BASE_URL}/login`, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await res.json();
-      if (!res.ok || !data.access_token) throw new Error(data.error || 'Login failed');
+    const data = await res.json();
+    console.log('[AuthProvider] login response:', data);
 
-      const decoded = jwtDecode(data.access_token);
-      const userInfo = {
-        id: decoded.sub,
-        email,
-        token: data.access_token,
-        refreshToken: data.refresh_token,
-      };
+    if (!res.ok || !data.access_token) throw new Error(data.error || 'Login failed');
 
-      localStorage.setItem('titanUser', JSON.stringify(userInfo));
-      setUser(userInfo);
-      scheduleTokenRefresh(data.access_token, data.refresh_token);
-      toast.success('Logged in successfully');
-    } catch (err) {
-      console.error('[AuthProvider] login error:', err);
-      toast.error(err.message || 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
+    const decoded = jwtDecode(data.access_token);
+    console.log('[AuthProvider] decoded token:', decoded);
+
+    const userInfo = {
+      id: decoded.sub,
+      email,
+      role: data.role || decoded.role, //  includes role from backend or token
+      token: data.access_token,
+      refreshToken: data.refresh_token,
+    };
+
+    localStorage.setItem('titanUser', JSON.stringify(userInfo));
+    setUser(userInfo);
+
+    scheduleTokenRefresh(data.access_token, data.refresh_token);
+
+    toast.success('Logged in successfully');
+  } catch (err) {
+    console.error('[AuthProvider] login error:', err);
+    toast.error(err.message || 'Login failed');
+  } finally {
+    setIsLoading(false);
+  }
   };
 
   // ------------------ Register ------------------

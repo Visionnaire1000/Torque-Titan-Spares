@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Trash2, PlusCircle, MinusCircle, ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './Cart.css';
+import '../styles/cart.css';
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart();
@@ -27,7 +27,6 @@ const Cart = () => {
         <div className="empty-cart-box">
           <ShoppingCart />
           <h2>Your cart is empty</h2>
-          <p>Proceed to Marketplace and browse animals.</p>
         </div>
       </div>
     );
@@ -42,7 +41,7 @@ const Cart = () => {
             <table className="cart-table">
               <thead>
                 <tr>
-                  <th>Animal</th>
+                  <th>Item</th>
                   <th>Price</th>
                   <th>Quantity</th>
                   <th>Subtotal</th>
