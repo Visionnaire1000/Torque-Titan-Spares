@@ -14,49 +14,69 @@ export const CartProvider = ({ children }) => {
     }
   });
 
+  // Persist cart whenever items change
   useEffect(() => {
     localStorage.setItem('titanCart', JSON.stringify(items));
   }, [items]);
 
-  const addItem = (animal) => {
+  // Add item to cart with automatic normalization
+  const addItem = (item, qty = 1) => {
+    const normalizedItem = {
+      id: item.id,
+      brand: item.brand ,
+      vehicle_type: item.vehicle_type ,
+      buying_price: item.buying_price ,
+      image: item.image
+    };
+
     setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === animal.id);
+      const existingItem = prevItems.find(i => i.id === normalizedItem.id);
       if (existingItem) {
-        return prevItems.map(item =>
-          item.id === animal.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+        return prevItems.map(i =>
+          i.id === normalizedItem.id
+            ? { ...i, quantity: i.quantity + qty }
+            : i
         );
       }
-      return [...prevItems, { id: animal.id, animal, quantity: 1 }];
+      return [...prevItems, { ...normalizedItem, quantity: qty }];
     });
-    
+
+    toast.success(`${normalizedItem.brand} added to cart`);
   };
 
+  // Remove an item completely
   const removeItem = (id) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    setItems(prevItems => prevItems.filter(i => i.id !== id));
     toast.success('Item removed from cart');
   };
 
+  // Update quantity (removes if quantity < 1)
   const updateQuantity = (id, quantity) => {
     if (quantity < 1) {
       removeItem(id);
       return;
     }
     setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
+      prevItems.map(i =>
+        i.id === id ? { ...i, quantity } : i
       )
     );
   };
 
+  // Clear the entire cart
   const clearCart = () => {
     setItems([]);
-    toast.info('Cart cleared');
+    toast.success('Cart cleared');
   };
 
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const total = items.reduce((sum, item) => sum + item.animal.price * item.quantity, 0);
+  // Total price calculation
+  const total = items.reduce(
+    (sum, i) => sum + (i.buying_price || 0) * (i.quantity || 1),
+    0
+  );
+
+  // Total quantity
+  const itemCount = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
 
   return (
     <CartContext.Provider
@@ -66,8 +86,8 @@ export const CartProvider = ({ children }) => {
         removeItem,
         updateQuantity,
         clearCart,
-        itemCount,
         total,
+        itemCount,
       }}
     >
       {children}
@@ -77,10 +97,6 @@ export const CartProvider = ({ children }) => {
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (!context) throw new Error('useCart must be used within a CartProvider');
   return context;
 };
-
-

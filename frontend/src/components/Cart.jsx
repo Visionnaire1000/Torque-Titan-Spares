@@ -7,8 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../styles/cart.css';
 
 const Cart = () => {
-  const { items, removeItem, updateQuantity, clearCart, total } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { items = [], removeItem, updateQuantity, clearCart, total = 0 } = useCart() || {};
+  const { isAuthenticated = false } = useAuth() || {};
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -20,12 +20,12 @@ const Cart = () => {
     navigate('/checkout');
   };
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="cart-container">
         <h1>Your Cart</h1>
         <div className="empty-cart-box">
-          <ShoppingCart />
+          <ShoppingCart size={48} />
           <h2>Your cart is empty</h2>
         </div>
       </div>
@@ -53,35 +53,37 @@ const Cart = () => {
                   <tr key={item.id}>
                     <td>
                       <div className="item-info">
-                        <Link to={`/animal/${item.animal.id}`}>
-                          {item.animal.name}
-                        </Link>
-                        <p>{item.animal.breed}, {item.animal.age} years</p>
+                         <img
+                          src={item.image}
+                          alt={item.name}
+                          className="cart-item-image"> 
+                          </img>
+                        <p id="name">{item.brand} for {item.vehicle_type} </p>
                         <p className="mobile-price">
-                          ${item.animal.price.toLocaleString()}
+                          KSH {item.buying_price?.toLocaleString() || '0'}
                         </p>
                       </div>
                     </td>
                     <td className="hide-on-mobile">
-                      ${item.animal.price.toLocaleString()}
+                      KSH {item.buying_price?.toLocaleString() || '0'}
                     </td>
                     <td>
                       <div className="quantity-control">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                        <button onClick={() => updateQuantity?.(item.id, item.quantity - 1)}>
                           <MinusCircle />
                         </button>
-                        <span>{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                        <span>{item.quantity || 1}</span>
+                        <button onClick={() => updateQuantity?.(item.id, item.quantity + 1)}>
                           <PlusCircle />
                         </button>
                       </div>
                     </td>
                     <td className="hide-on-mobile">
-                      ${(item.animal.price * item.quantity).toLocaleString()}
+                      KSH {((item.buying_price || 0) * (item.quantity || 1)).toLocaleString()}
                     </td>
                     <td>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem?.(item.id)}
                         aria-label="Remove item"
                         className="remove-btn"
                       >
@@ -98,7 +100,7 @@ const Cart = () => {
             <button
               onClick={() => {
                 if (window.confirm('Are you sure you want to clear your cart?')) {
-                  clearCart();
+                  clearCart?.();
                 }
               }}
               className="clear-cart-btn"
@@ -112,11 +114,11 @@ const Cart = () => {
           <div className="summary-details">
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>${total.toLocaleString()}</span>
+              <span>KSH {total.toLocaleString()}</span>
             </div>
             <div className="summary-row total">
               <span>Total</span>
-              <span>${total.toLocaleString()}</span>
+              <span>KSH {total.toLocaleString()}</span>
             </div>
           </div>
 

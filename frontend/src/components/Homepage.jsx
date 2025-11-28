@@ -81,7 +81,6 @@ const HomePage = () => {
 
   const handleAddToCart = (item) => {
     addItem(item);
-    toast.success(`${item.brand} added to cart`);
   };
 
   // Carousel items
@@ -97,15 +96,15 @@ const HomePage = () => {
   return (
     <div className="homepage">
       <h2>🔥HOT DEALS</h2>
-
+      
       {/* Carousel */}
       <div className="top-carousel">
         {visibleCarouselItems.map(item => (
           <div key={item.id} className="item-card">
-            <img src={item.image} alt={item.name} />
-            <h4>{item.brand}</h4>
+            <img src={item.image} alt={item.brand} />
+            <h4>{item.brand} for {item.vehicle_type}</h4>
             <p id='price'>
-              KSH {item.marked_price} 
+              KSH {item.buying_price} 
               {item.discount_percentage > 0 && (
                 <span className="discount"> (-{item.discount_percentage.toFixed(0)}%)</span>
               )}
@@ -124,10 +123,10 @@ const HomePage = () => {
           <div className="items-grid">
             {gridItems.map(item => (
               <div key={item.id} className="item-card">
-                <img src={item.image} alt={item.description} />
-                <h4>{item.brand}</h4>
+                <img src={item.image} alt={item.brand} />
+                <h4>{item.brand} for {item.vehicle_type}</h4>
                 <p id="price">
-                  KSH {item.marked_price} 
+                  KSH {item.buying_price} 
                   {item.discount_percentage > 0 && (
                     <span className="discount"> (-{item.discount_percentage.toFixed(0)}%)</span>
                   )}
