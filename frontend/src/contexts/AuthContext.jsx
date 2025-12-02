@@ -6,45 +6,49 @@ import { toast } from 'react-toastify';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  console.log('[AuthProvider] render');
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const refreshTimer = useRef(null);
 
-  // ------------------ Load user from localStorage ------------------
+  // ------------------ Load saved user ------------------
   useEffect(() => {
-    console.log('[AuthProvider] useEffect start');
     try {
       const stored = localStorage.getItem('titanUser');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setUser(parsed);
+
+        // Validate role (ONLY admin or buyer allowed)
+        if (parsed.role === 'admin' || parsed.role === 'buyer') {
+          setUser(parsed);
+        } else {
+          console.warn('Invalid role found in storage. Resetting.');
+          localStorage.removeItem('titanUser');
+        }
       }
     } catch (err) {
-      console.error('[AuthProvider] error reading localStorage:', err);
+      console.error('[AuthProvider] localStorage error:', err);
       localStorage.removeItem('titanUser');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // ------------------ Helper: Check if token expired ------------------
+  // ------------------ Token expiry check ------------------
   const isTokenExpired = (token) => {
     try {
       const decoded = jwtDecode(token);
       if (!decoded.exp) return true;
-      const now = Date.now() / 1000;
-      return decoded.exp < now;
+      return decoded.exp < Date.now() / 1000;
     } catch {
       return true;
     }
   };
 
-  // ------------------ Secure fetch wrapper ------------------
+  // ------------------ Protected fetch ------------------
   const authFetch = async (url, options = {}) => {
     let tokenToUse = user?.token;
 
-    // Auto-refresh if expired
+    // Refresh if expired
     if (user?.token && isTokenExpired(user.token) && user.refreshToken) {
       tokenToUse = await refreshAccessToken(user.refreshToken);
       if (!tokenToUse) throw new Error('Token refresh failed');
@@ -54,26 +58,26 @@ export const AuthProvider = ({ children }) => {
       'Content-Type': 'application/json',
       ...(options.headers || {}),
     };
+
     if (tokenToUse) headers.Authorization = `Bearer ${tokenToUse}`;
 
     const res = await fetch(url, { ...options, headers });
 
+    // Retry once on 401
     if (res.status === 401 && user?.refreshToken) {
-      console.warn('[authFetch] 401 detected, attempting refresh...');
       const newToken = await refreshAccessToken(user.refreshToken);
       if (!newToken) throw new Error('Re-authentication required');
 
-      const retryRes = await fetch(url, {
+      return fetch(url, {
         ...options,
         headers: { ...headers, Authorization: `Bearer ${newToken}` },
       });
-      return retryRes;
     }
 
     return res;
   };
 
-  // ------------------ Helper: Refresh access token ------------------
+  // ------------------ Refresh access token ------------------
   const refreshAccessToken = async (refreshToken) => {
     try {
       const res = await fetch(`${config.API_BASE_URL}/refresh`, {
@@ -87,91 +91,97 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       if (!res.ok || !data.access_token) throw new Error(data.error || 'Failed to refresh token');
 
-      const updatedUser = { ...user, token: data.access_token };
-      localStorage.setItem('titanUser', JSON.stringify({ ...updatedUser, refreshToken }));
+      const updatedUser = {
+        ...user,
+        token: data.access_token,
+        role: user.role,             // ensure role persists
+      };
+
+      localStorage.setItem('titanUser', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      console.log('[AuthProvider] Access token refreshed');
       scheduleTokenRefresh(data.access_token, refreshToken);
       return data.access_token;
+
     } catch (err) {
       console.error('[AuthProvider] refresh failed:', err);
-      toast.error('Session expired, please log in again');
       logout(false);
+      toast.error('Session expired. Please log in again.');
       return null;
     }
   };
 
-  // ------------------ Auto refresh scheduler ------------------
+  // ------------------ Auto-schedule refresh ------------------
   const scheduleTokenRefresh = (accessToken, refreshToken) => {
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
+
     try {
       const decoded = jwtDecode(accessToken);
       if (!decoded.exp) return;
 
-      const expTime = decoded.exp * 1000; // ms
-      const refreshTime = expTime - Date.now() - 2 * 60 * 1000; // 2 mins before expiry
+      const expiresAt = decoded.exp * 1000;
+      const refreshTime = expiresAt - Date.now() - 2 * 60 * 1000; // refresh 2 minutes early
 
       if (refreshTime > 0) {
-        console.log(`[AuthProvider] scheduling refresh in ${Math.floor(refreshTime / 1000)}s`);
         refreshTimer.current = setTimeout(() => {
           refreshAccessToken(refreshToken);
         }, refreshTime);
       }
     } catch (err) {
-      console.error('[AuthProvider] schedule refresh error:', err);
+      console.error('[AuthProvider] schedule error:', err);
     }
   };
 
   // ------------------ Login ------------------
- const login = async (email, password) => {
-  console.log('[AuthProvider] login()', { email });
-  setIsLoading(true);
+  const login = async (email, password) => {
+    setIsLoading(true);
 
-  try {
-    const res = await authFetch(`${config.API_BASE_URL}/login`, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
-    console.log('[AuthProvider] login response:', data);
+      const data = await res.json();
+      if (!res.ok || !data.access_token) throw new Error(data.error || 'Login failed');
 
-    if (!res.ok || !data.access_token) throw new Error(data.error || 'Login failed');
+      const decoded = jwtDecode(data.access_token);
 
-    const decoded = jwtDecode(data.access_token);
-    console.log('[AuthProvider] decoded token:', decoded);
+      const userInfo = {
+        id: decoded.sub,
+        email,
+        role: data.role,           
+        token: data.access_token,
+        refreshToken: data.refresh_token,
+      };
 
-    const userInfo = {
-      id: decoded.sub,
-      email,
-      role: data.role || decoded.role, //  includes role from backend or token
-      token: data.access_token,
-      refreshToken: data.refresh_token,
-    };
+      // Validate role
+      if (userInfo.role !== 'admin' && userInfo.role !== 'buyer') {
+        throw new Error('Invalid role assigned by server');
+      }
 
-    localStorage.setItem('titanUser', JSON.stringify(userInfo));
-    setUser(userInfo);
+      localStorage.setItem('titanUser', JSON.stringify(userInfo));
+      setUser(userInfo);
 
-    scheduleTokenRefresh(data.access_token, data.refresh_token);
+      scheduleTokenRefresh(data.access_token, data.refresh_token);
 
-    toast.success('Logged in successfully');
-  } catch (err) {
-    console.error('[AuthProvider] login error:', err);
-    toast.error(err.message || 'Login failed');
-  } finally {
-    setIsLoading(false);
-  }
+      toast.success('Logged in successfully');
+    } catch (err) {
+      toast.error(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ------------------ Register ------------------
   const register = async (email, password) => {
-    console.log('[AuthProvider] register()', { email });
     setIsLoading(true);
 
     try {
-      const res = await authFetch(`${config.API_BASE_URL}/register`, {
+      const res = await fetch(`${config.API_BASE_URL}/register`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
@@ -180,29 +190,30 @@ export const AuthProvider = ({ children }) => {
 
       toast.success('Registration successful');
     } catch (err) {
-      console.error('[AuthProvider] register error:', err);
-      toast.error(err.message || ' Registration failed');
+      toast.error(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-
   // ------------------ Logout ------------------
   const logout = (showToast = true) => {
     localStorage.removeItem('titanUser');
     setUser(null);
-    if (refreshTimer.current) clearTimeout(refreshTimer.current);
-    if (showToast) {
-       toast.success('Logged out successfully');
+
+    if (refreshTimer.current) {
+      clearTimeout(refreshTimer.current);
     }
+
+    if (showToast) toast.success('Logged out successfully');
   };
 
-  // ------------------ Auto-start refresh timer when user loads ------------------
+  // ------------------ Start refresh on login ------------------
   useEffect(() => {
     if (user?.token && user.refreshToken) {
       scheduleTokenRefresh(user.token, user.refreshToken);
     }
+
     return () => {
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
     };
@@ -227,8 +238,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 };
-
-

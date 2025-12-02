@@ -1,0 +1,232 @@
+/* === Base Styles === */
+.checkout-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+  color: rgb(0, 64, 128);
+}
+
+.checkout-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: rgb(0, 64, 128);
+}
+
+/* === Layout === */
+.checkout-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.checkout-form-container {
+  flex: 2;
+  min-width: 300px;
+}
+
+.desktop-order-summary {
+  flex: 1;
+  min-width: 280px;
+}
+
+.mobile-order-summary {
+  display: none;
+}
+
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; 
+  padding: 1rem; 
+}
+
+.card-input {
+  padding: 0.75rem 1rem; 
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%; 
+  box-sizing: border-box; 
+}
+
+
+.payment-method {
+  margin-top: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.payment-label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.payment-icon {
+  color: rgb(0, 64, 128);
+  font-size: 1.5rem;
+}
+
+.payment-method-title {
+  font-weight: 600;
+}
+
+.payment-method-description {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+/* === Card Details === */
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #f7f9fc;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  margin-top: 2rem;
+  max-width: 600px;
+}
+
+.card-field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-label {
+  font-weight: 600;
+  color: rgb(0, 64, 128);
+  margin-bottom: 0.5rem;
+}
+
+.card-input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.card-input:focus {
+  outline: none;
+  border-color: rgb(0, 64, 128);
+  box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.15);
+}
+
+.card-details-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.checkout-buttons {
+  margin-top: 2rem;
+}
+
+.complete-purchase-btn {
+  background-color: rgb(0, 64, 128);
+  color: white;
+  font-weight: 600;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.complete-purchase-btn:hover {
+  background-color: rgb(0, 90, 180);
+}
+
+.order-summary {
+  background-color: #f4f7fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.order-summary-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.order-item-details {
+  flex: 1;
+}
+
+.order-item-name {
+  font-weight: 600;
+  color: rgb(0, 64, 128);
+}
+
+.order-item-breed {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.order-item-quantity {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.order-item-price {
+  font-weight: 600;
+  color: rgb(0, 64, 128);
+}
+
+.order-total {
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.order-total-line {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+  .checkout-grid {
+    flex-direction: column;
+  }
+
+  .mobile-order-summary {
+    display: block;
+    margin-top: 2rem;
+  }
+
+  .desktop-order-summary {
+    display: none;
+  }
+}

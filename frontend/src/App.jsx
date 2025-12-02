@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { CartProvider } from "./contexts/CartContext";
 
 //protected routes component
-//import RoleProtectedRoutes from "./components/RoleProtectedRoutes"; 
+import RoleProtectedRoutes from "./components/RoleProtectedRoutes"; 
 
 //layout
 import Navbar from "./components/Navbar";
@@ -19,6 +19,8 @@ import Register from "./components/Register";
 import Login from "./components/Login";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
+import Checkout from "./components/Checkout"; 
+import Stripe from "./components/Stripe";  
 
 
 function App() {
@@ -33,11 +35,29 @@ function App() {
               <Route path="/login" element={<Login />} /> 
               <Route path="/" element={<Homepage />} />  
               <Route 
-               path="/cart" 
-               element={<Cart />} />
-              {/*<RoleProtectedRoutes role="buyer">
-                   <Cart />
-              </RoleProtectedRoutes>  */}
+                  path="/cart" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <Cart />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/checkout" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <Checkout />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/payment" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <Stripe />
+                    </RoleProtectedRoutes>
+                  } 
+              />
             </Routes>
           </main>
           <Footer />
