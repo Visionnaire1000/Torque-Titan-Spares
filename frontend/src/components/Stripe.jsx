@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { CreditCard } from 'lucide-react';
@@ -42,22 +42,23 @@ const Stripe = () => {
       return;
     }
 
+    if (!items || items.length === 0) {
+      toast.error('Your cart is empty');
+      return;
+    }
+
     setLoading(true);
 
     const orderData = {
       items: items.map(item => ({
-        animal_id: item.animal.id,
-        price: item.animal.price,
+        item_id: item.id,
+        price: item.buying_price,
         quantity: item.quantity,
       })),
       total_price: total,
     };
 
     try {
-      const params = new URLSearchParams();
-      params.append('user_id', user.id);
-      params.append('total_price', total);
-
       const response = await fetch(`${config.API_BASE_URL}/orders`, {
         method: 'POST',
         headers: {
@@ -90,7 +91,6 @@ const Stripe = () => {
           <form onSubmit={handleSubmit}>
             <div className="payment-method">
               <h2 className="section-title">Payment Method</h2>
-
               <div className="payment-option">
                 <input
                   type="radio"
@@ -155,7 +155,7 @@ const Stripe = () => {
             </div>
 
             <div className="checkout-buttons">
-              <button type="submit" className="complete-purchase-btn" disabled={loading}>
+              <button type="submit" className="complete-purchase-btn" disabled={loading || items.length === 0}>
                 {loading ? 'Processing...' : 'Submit Order'}
               </button>
             </div>
@@ -171,6 +171,8 @@ const Stripe = () => {
 };
 
 const OrderSummary = ({ items, total }) => {
+  if (!items || items.length === 0) return null;
+
   return (
     <div className="order-summary">
       <h2 className="order-summary-title">Order Summary</h2>
@@ -178,12 +180,12 @@ const OrderSummary = ({ items, total }) => {
         {items.map((item) => (
           <div key={item.id} className="order-item">
             <div className="order-item-details">
-              <p className="order-item-name">{item.animal.name}</p>
-              <p className="order-item-breed">{item.animal.breed}, {item.animal.age} years</p>
+              <p className="order-item-name">{item.name}</p>
+              <p className="order-item-brand">{item.brand}</p>
               <p className="order-item-quantity">Quantity: {item.quantity}</p>
             </div>
             <span className="order-item-price">
-              ${(item.animal.price * item.quantity).toLocaleString()}
+              KSH {(item.buying_price * item.quantity).toLocaleString()}
             </span>
           </div>
         ))}
@@ -191,7 +193,7 @@ const OrderSummary = ({ items, total }) => {
       <div className="order-total">
         <div className="order-total-line">
           <span>Subtotal</span>
-          <span>${total.toLocaleString()}</span>
+          <span>KSH {total.toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -199,5 +201,3 @@ const OrderSummary = ({ items, total }) => {
 };
 
 export default Stripe;
-
-
