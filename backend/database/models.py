@@ -203,8 +203,8 @@ class OrderItems(db.Model, SerializerMixin):
     #-------------------------CUSTOM METHOD---------------------------------
        #(calculates total price of order items)
     def calculate_subtotal(self):
-        if self.spareparts:
-            self.unit_price = round(self.spareparts.marked_price - self.spareparts.discount_amount, 2)
+        if self.sparepart:
+            self.unit_price = round(self.sparepart.marked_price - self.sparepart.discount_amount, 2)
         self.subtotal = round(self.unit_price * self.quantity, 2)
 
 #------------------------------EVENT LISTENERS---------------------------------

@@ -240,7 +240,7 @@ class Checkout(Resource):
                 price = int((part.marked_price - part.discount_amount) * 100)
                 line_items.append({
                     'price_data': {
-                        'currency': 'Ksh',
+                        'currency': 'kes',
                         'product_data': {'name': f"{part.brand} {part.category}"},
                         'unit_amount': price
                     },
@@ -252,7 +252,7 @@ class Checkout(Resource):
                 price = int((part.marked_price - part.discount_amount) * 100)
                 line_items.append({
                     'price_data': {
-                        'currency': 'Ksh',
+                        'currency': 'kes',
                         'product_data': {'name': f"{part.brand} {part.category}"},
                         'unit_amount': price
                     },

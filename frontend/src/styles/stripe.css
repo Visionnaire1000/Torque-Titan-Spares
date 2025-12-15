@@ -230,3 +230,55 @@ form {
     display: none;
   }
 }
+
+/* === Address Section === */
+.address-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f7f9fc;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.address-section .section-title {
+  margin-bottom: 0.5rem;
+  color: rgb(0, 64, 128);
+}
+
+/* Input fields match card-input styling */
+.address-section input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.address-section input:focus {
+  outline: none;
+  border-color: rgb(0, 64, 128);
+  box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.15);
+}
+
+/* Two-column layout for city + postal on larger screens */
+.address-row {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+/* === Mobile Optimization === */
+@media (max-width: 768px) {
+  .address-section {
+    padding: 1.2rem;
+  }
+
+  .address-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

@@ -20,8 +20,10 @@ import Login from "./components/Login";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
 import Checkout from "./components/Checkout"; 
-import Stripe from "./components/Stripe";  
-
+import Stripe from "./components/Stripe";
+import PaymentSuccess from "./components/PaymentSuccess";
+import PaymentCancel from "./components/PaymentCancel"; 
+ 
 
 function App() {
   return (
@@ -57,6 +59,22 @@ function App() {
                         <Stripe />
                     </RoleProtectedRoutes>
                   } 
+              />
+               <Route 
+                  path="/payment-success" 
+                  element={
+                      <RoleProtectedRoutes allowedRoles={['buyer']}>
+                         <PaymentSuccess />
+                      </RoleProtectedRoutes>
+                      }
+              />
+               <Route 
+                  path="/payment-success" 
+                  element={
+                      <RoleProtectedRoutes allowedRoles={['buyer']}>
+                         <PaymentCancel />
+                      </RoleProtectedRoutes>
+                      }
               />
             </Routes>
           </main>

@@ -9,7 +9,7 @@ import '../styles/stripe.css';
 
 const Stripe = () => {
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, authFetch } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [loading, setLoading] = useState(false);
 
@@ -21,20 +21,33 @@ const Stripe = () => {
     postal: '',
   });
 
+  const [address, setAddress] = useState({
+    street: '',
+    city: '',
+    postal_code: '',
+    country: '',
+  });
+
   const handleChange = (e) => {
     setCardDetails({ ...cardDetails, [e.target.name]: e.target.value });
+  };
+
+  const handleAddressChange = (e) => {
+    setAddress({ ...address, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const stored = localStorage.getItem('titanUser');
-    if (!stored) {
-      toast.error('Not authenticated');
+    if (!items || items.length === 0) {
+      toast.error('Your cart is empty');
       return;
     }
 
-    const { token } = JSON.parse(stored);
+    if (!address.street || !address.city || !address.country) {
+      toast.error('Please fill all required address fields');
+      return;
+    }
 
     const { name, number, expiry, cvc } = cardDetails;
     if (paymentMethod === 'stripe' && (!name || !number || !expiry || !cvc)) {
@@ -42,29 +55,26 @@ const Stripe = () => {
       return;
     }
 
-    if (!items || items.length === 0) {
-      toast.error('Your cart is empty');
-      return;
-    }
-
     setLoading(true);
 
     const orderData = {
       items: items.map(item => ({
-        item_id: item.id,
+        sparepart_id: item.id, 
         price: item.buying_price,
         quantity: item.quantity,
       })),
       total_price: total,
+      street: address.street,
+      city: address.city,
+      postal_code: address.postal_code,
+      country: address.country,
+      status: 'pending',
+      paid: false,
     };
 
     try {
-      const response = await fetch(`${config.API_BASE_URL}/orders`, {
+      const response = await authFetch(`${config.API_BASE_URL}/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(orderData),
       });
 
@@ -72,7 +82,7 @@ const Stripe = () => {
 
       if (response.ok) {
         toast.success('Order placed successfully');
-        clearCart();  
+        clearCart();
       } else {
         toast.error(data.message || 'Something went wrong with the order');
       }
@@ -89,6 +99,7 @@ const Stripe = () => {
       <div className="checkout-grid">
         <div className="checkout-form-container">
           <form onSubmit={handleSubmit}>
+            {/* --- PAYMENT METHOD --- */}
             <div className="payment-method">
               <h2 className="section-title">Payment Method</h2>
               <div className="payment-option">
@@ -110,6 +121,7 @@ const Stripe = () => {
               </div>
             </div>
 
+            {/* --- CARD DETAILS --- */}
             <div className="card-details">
               <input
                 type="text"
@@ -150,18 +162,65 @@ const Stripe = () => {
               />
             </div>
 
+            {/* --- ADDRESS SECTION --- */}
+            <div className="address-section">
+              <h2 className="section-title">Shipping Address</h2>
+              <input
+                type="text"
+                name="street"
+                placeholder="Street Address"
+                value={address.street}
+                onChange={handleAddressChange}
+                required
+                className="card-input"
+              />
+              <input
+                type="text"
+                name="city"
+                placeholder="City"
+                value={address.city}
+                onChange={handleAddressChange}
+                required
+                className="card-input"
+              />
+              <input
+                type="text"
+                name="postal_code"
+                placeholder="Postal Code"
+                value={address.postal_code}
+                onChange={handleAddressChange}
+                className="card-input"
+              />
+              <input
+                type="text"
+                name="country"
+                placeholder="Country"
+                value={address.country}
+                onChange={handleAddressChange}
+                required
+                className="card-input"
+              />
+            </div>
+
+            {/* MOBILE SUMMARY */}
             <div className="mobile-order-summary">
               <OrderSummary items={items} total={total} />
             </div>
 
+            {/* SUBMIT BUTTON */}
             <div className="checkout-buttons">
-              <button type="submit" className="complete-purchase-btn" disabled={loading || items.length === 0}>
+              <button
+                type="submit"
+                className="complete-purchase-btn"
+                disabled={loading || items.length === 0}
+              >
                 {loading ? 'Processing...' : 'Submit Order'}
               </button>
             </div>
           </form>
         </div>
 
+        {/* DESKTOP SUMMARY */}
         <div className="desktop-order-summary">
           <OrderSummary items={items} total={total} />
         </div>
