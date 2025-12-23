@@ -66,7 +66,10 @@ export const CartProvider = ({ children }) => {
   // Clear the entire cart
   const clearCart = () => {
     setItems([]);
-    toast.success('Cart cleared');
+    toast.success("Cart cleared", {
+      autoClose: 1000, 
+   });
+
   };
 
   // Total price calculation

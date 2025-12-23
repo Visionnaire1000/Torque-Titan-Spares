@@ -25,5 +25,5 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
     
     # Checkout
-    STRIPE_SUCCESS_URL = os.getenv("FRONTEND_SUCCESS_URL")
-    STRIPE_CANCEL_URL = os.getenv("FRONTEND_CANCEL_URL")
+    STRIPE_SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL")
+    STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL")

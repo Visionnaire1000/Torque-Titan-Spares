@@ -19,9 +19,8 @@ import Register from "./components/Register";
 import Login from "./components/Login";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
-import Checkout from "./components/Checkout"; 
-import Stripe from "./components/Stripe";
-import PaymentSuccess from "./components/PaymentSuccess";
+import StripeCheckout from "./components/StripeCheckout";
+import PaymentSuccess from "./components/PaymentSuccess"; 
 import PaymentCancel from "./components/PaymentCancel"; 
  
 
@@ -48,19 +47,11 @@ function App() {
                   path="/checkout" 
                   element={
                      <RoleProtectedRoutes allowedRoles={['buyer']}>
-                        <Checkout />
+                        <StripeCheckout />
                     </RoleProtectedRoutes>
                   } 
               />
               <Route 
-                  path="/payment" 
-                  element={
-                     <RoleProtectedRoutes allowedRoles={['buyer']}>
-                        <Stripe />
-                    </RoleProtectedRoutes>
-                  } 
-              />
-               <Route 
                   path="/payment-success" 
                   element={
                       <RoleProtectedRoutes allowedRoles={['buyer']}>
@@ -69,13 +60,13 @@ function App() {
                       }
               />
                <Route 
-                  path="/payment-success" 
+                  path="/payment-cancel" 
                   element={
                       <RoleProtectedRoutes allowedRoles={['buyer']}>
                          <PaymentCancel />
                       </RoleProtectedRoutes>
                       }
-              />
+              /> 
             </Routes>
           </main>
           <Footer />

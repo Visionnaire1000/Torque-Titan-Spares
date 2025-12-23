@@ -5,8 +5,6 @@ from datetime import timedelta
 from sqlalchemy import desc, asc, func
 from core.extensions import db
 from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
-from core.config import Config
-import stripe
 
 # ------------------ Auth ------------------
 class Register(Resource):
@@ -222,114 +220,7 @@ class ReviewReactionsResource(Resource):
 
 
 # ------------------ Orders ------------------
-class Checkout(Resource):
-    @jwt_required()
-    def post(self):
-        data = request.get_json()
-        items = data.get('items', [])  # support test format
-        part_ids = data.get('part_ids', [])
-
-        if not items and not part_ids:
-            return {"error": "No spare parts selected"}, 400
-
-        line_items = []
-
-        if items:
-            for item in items:
-                part = SpareParts.query.get_or_404(item["part_id"])
-                price = int((part.marked_price - part.discount_amount) * 100)
-                line_items.append({
-                    'price_data': {
-                        'currency': 'kes',
-                        'product_data': {'name': f"{part.brand} {part.category}"},
-                        'unit_amount': price
-                    },
-                    'quantity': item.get("quantity", 1)
-                })
-        else:  # fallback to simple list
-            for pid in part_ids:
-                part = SpareParts.query.get_or_404(pid)
-                price = int((part.marked_price - part.discount_amount) * 100)
-                line_items.append({
-                    'price_data': {
-                        'currency': 'kes',
-                        'product_data': {'name': f"{part.brand} {part.category}"},
-                        'unit_amount': price
-                    },
-                    'quantity': 1
-                })
-
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=Config.STRIPE_SUCCESS_URL,
-            cancel_url=Config.STRIPE_CANCEL_URL,
-        )
-        return {'checkout_url': session.url}, 200
-   
 class OrdersResource(Resource):
-    @jwt_required()
-    def post(self):
-        current_user = Users.query.get(get_jwt_identity())
-        data = request.get_json()
-
-        items = data.get('items', [])
-        street = data.get('street')
-        city = data.get('city')
-        country = data.get('country')
-        postal_code = data.get('postal_code')
-
-        if not items:
-            return {"error": "No items provided"}, 400
-        if not all([street, city, country]):
-            return {"error": "Missing address fields (street, city, country required)"}, 400
-
-        order = Orders(
-            user_id=current_user.id,
-            paid=True,
-            street=street,
-            city=city,
-            postal_code=postal_code,
-            country=country,
-            status="pending"
-        )
-        db.session.add(order)
-
-        for item in items:
-            part = SpareParts.query.get_or_404(item['sparepart_id'])
-            qty = item.get('quantity', 1)
-            order_item = OrderItems(order=order, sparepart=part, quantity=qty)
-            db.session.add(order_item)
-
-        db.session.commit()
-        return order.to_dict(), 201
-
-    @jwt_required()
-    def patch(self, order_id):
-        """Update an order's status (e.g., cancel by setting status='cancelled')."""
-        current_user = Users.query.get(get_jwt_identity())
-        order = Orders.query.get_or_404(order_id)
-
-        if order.user_id != current_user.id:
-            return {"error": "You cannot modify someone else's order"}, 403
-
-        data = request.get_json()
-        new_status = data.get("status")
-
-        if not new_status:
-            return {"error": "Missing status field"}, 400
-
-        # Only allow pending -> cancelled for now
-        if order.status != "pending":
-            return {"error": f"Order cannot be updated (current status: {order.status})"}, 400
-        if new_status not in ["cancelled"]:
-            return {"error": "Invalid status change"}, 400
-
-        order.status = new_status
-        db.session.commit()
-        return {"message": f"Order {order_id} status updated to {new_status}"}, 200
-
     @jwt_required()
     def get(self):
         """Get summary of orders for the logged-in user."""
@@ -348,7 +239,33 @@ class OrdersResource(Resource):
             })
 
         return {"orders": summary}, 200
+
+    @jwt_required()
+    def patch(self, order_id):
+        """Update an order's status (e.g., cancel by setting status='cancelled')."""
+        current_user = Users.query.get(get_jwt_identity())
+        order = Orders.query.get_or_404(order_id)
+
+        if order.user_id != current_user.id:
+            return {"error": "You cannot modify someone else's order"}, 403
+
+        data = request.get_json()
+        new_status = data.get("status")
+
+        if not new_status:
+            return {"error": "Missing status field"}, 400
+
+        # Only allow pending -> cancelled
+        if order.status != "pending":
+            return {"error": f"Order cannot be updated (current status: {order.status})"}, 400
+        if new_status not in ["cancelled"]:
+            return {"error": "Invalid status change"}, 400
+
+        order.status = new_status
+        db.session.commit()
+        return {"message": f"Order {order_id} status updated to {new_status}"}, 200
     
+
 class AdminOrders(Resource):
     #View all orders (admin only).
     @jwt_required()

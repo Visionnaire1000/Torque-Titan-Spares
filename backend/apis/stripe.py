@@ -1,13 +1,10 @@
-# apis/stripe.py
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import stripe
-from database.models import db, Users, Orders, OrderItems, SpareParts
+from core.extensions import db
+from database.models import Users, Orders, OrderItems, SpareParts
 
 def init_stripe(app):
-    """
-    Initialize Stripe routes and webhook using environment variables from Config.
-    """
     stripe.api_key = app.config["STRIPE_SECRET_KEY"]
     endpoint_secret = app.config["STRIPE_WEBHOOK_SECRET"]
     success_url = app.config["STRIPE_SUCCESS_URL"]
@@ -31,7 +28,7 @@ def init_stripe(app):
         if not all([street, city, country]):
             return {"error": "Missing address fields"}, 400
 
-        # Create order (paid=False)
+        # Create order in DB with paid=False
         order = Orders(
             user_id=current_user.id,
             paid=False,
@@ -46,39 +43,47 @@ def init_stripe(app):
         stripe_items = []
 
         for item in items:
-            part = SpareParts.query.get(item["sparepart_id"])
+            part = SpareParts.query.get_or_404(item["sparepart_id"])
+            part.calculate_discount()  
             qty = item.get("quantity", 1)
 
             if qty <= 0:
                 return {"error": "Quantity must be positive"}, 400
 
-            # Add order item
-            order_item = OrderItems(order=order, sparepart=part, quantity=qty)
+            # Create OrderItem
+            order_item = OrderItems(
+                order=order,
+                sparepart=part,
+                quantity=qty
+            )
+            order_item.calculate_subtotal()  # calculates unit_price & subtotal
             db.session.add(order_item)
 
             # Prepare Stripe line item
             stripe_items.append({
                 "price_data": {
                     "currency": "kes",
-                    "product_data": {"name": part.name},
-                    "unit_amount": int(part.marked_price * 100)
+                    "product_data": {"name": f"{part.brand} {part.category}"},
+                    "unit_amount": int(order_item.unit_price * 100),
                 },
                 "quantity": qty,
             })
 
+        # Calculate total price for the order
+        order.calculate_total()
         db.session.commit()
 
-        # Create Stripe session
+        # Create Stripe checkout session
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             mode="payment",
             line_items=stripe_items,
-            metadata={"order_id": order.id},  # Link Stripe session to order
+            metadata={"order_id": order.id},
             success_url=success_url,
             cancel_url=cancel_url
         )
 
-        return jsonify({"url": session.url})
+        return jsonify({"checkout_url": session.url})
 
     # ---------------- STRIPE WEBHOOK ----------------
     @app.route("/webhook", methods=["POST"])
@@ -87,21 +92,20 @@ def init_stripe(app):
         sig_header = request.headers.get("Stripe-Signature")
 
         try:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, endpoint_secret
-            )
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         except Exception as e:
             return str(e), 400
 
-        # Payment successful
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
             order_id = session["metadata"]["order_id"]
 
             order = Orders.query.get(order_id)
             if order:
+                order.calculate_total()
                 order.paid = True
-                order.status = "paid"
+                db.session.commit()
+
                 db.session.commit()
                 print(f"✔ ORDER {order_id} MARKED AS PAID")
 
