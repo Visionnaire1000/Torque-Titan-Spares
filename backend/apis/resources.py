@@ -153,37 +153,29 @@ class SparePartsList(Resource):
             "page": pagination.page,
             "pages": pagination.pages
         }, 200
-    
+
 # ------------------ Reviews ------------------
 class ReviewsResource(Resource):
     def get(self, part_id):
         """Get all reviews for a spare part"""
         part = SpareParts.query.get_or_404(part_id)
-
-        reviews = Reviews.query.filter_by(
-            sparepart_id=part.id
-        ).order_by(Reviews.id.desc()).all()
-
+        reviews = Reviews.query.filter_by(sparepart_id=part.id).order_by(Reviews.id.desc()).all()
         return [r.to_dict() for r in reviews], 200
 
     @jwt_required()
     def post(self, part_id):
         """Create a review (rating and/or comment)"""
         current_user_id = get_jwt_identity()
-
         user = Users.query.get(current_user_id)
         if not user:
             return {"error": "Invalid user"}, 401
 
         part = SpareParts.query.get_or_404(part_id)
-
         data = request.get_json() or {}
-
-        rating = data.get("rating")
-        comment = data.get("comment")
 
         # ---- Validate rating ----
         parsed_rating = None
+        rating = data.get("rating")
         if rating is not None:
             try:
                 rating = int(rating)
@@ -195,6 +187,7 @@ class ReviewsResource(Resource):
 
         # ---- Validate comment ----
         parsed_comment = None
+        comment = data.get("comment")
         if isinstance(comment, str) and comment.strip():
             parsed_comment = comment.strip()
 
@@ -202,15 +195,12 @@ class ReviewsResource(Resource):
             return {"error": "Add a rating or comment"}, 400
 
         # ---- Optional: prevent duplicate reviews per user per part ----
-        existing = Reviews.query.filter_by(
-            user_id=current_user_id,
-            sparepart_id=part.id
-        ).first()
-
+        existing = Reviews.query.filter_by(user_id=current_user_id, sparepart_id=part.id).first()
         if existing:
             return {"error": "You have already reviewed this item"}, 409
 
         review = Reviews(
+            id=generate_uuid(),
             user_id=current_user_id,
             sparepart_id=part.id,
             rating=parsed_rating,
@@ -220,18 +210,22 @@ class ReviewsResource(Resource):
         try:
             db.session.add(review)
             db.session.commit()
+
+            # Update spare part stats
+            part.update_review_stats()
+            db.session.commit()
         except Exception:
             db.session.rollback()
             return {"error": "Failed to save review"}, 500
 
         return review.to_dict(), 201
 
+
 class ReviewEditResource(Resource):
     @jwt_required()
     def patch(self, review_id):
         """Edit a review (owner only)"""
         current_user_id = get_jwt_identity()
-
         review = Reviews.query.get_or_404(review_id)
 
         if review.user_id != current_user_id:
@@ -266,6 +260,10 @@ class ReviewEditResource(Resource):
 
         try:
             db.session.commit()
+
+            # Update spare part stats
+            review.spareparts.update_review_stats()
+            db.session.commit()
         except Exception:
             db.session.rollback()
             return {"error": "Failed to update review"}, 500
@@ -276,20 +274,25 @@ class ReviewEditResource(Resource):
     def delete(self, review_id):
         """Delete a review (owner only)"""
         current_user_id = get_jwt_identity()
-
         review = Reviews.query.get_or_404(review_id)
 
         if review.user_id != current_user_id:
             return {"error": "Cannot delete others' reviews"}, 403
 
         try:
+            sparepart = review.spareparts
             db.session.delete(review)
+            db.session.commit()
+
+            # Update spare part stats
+            sparepart.update_review_stats()
             db.session.commit()
         except Exception:
             db.session.rollback()
             return {"error": "Failed to delete review"}, 500
 
         return {"message": "Review deleted"}, 200
+
 
 class ReviewReactionsResource(Resource):
     @jwt_required()
@@ -310,21 +313,20 @@ class ReviewReactionsResource(Resource):
             return {"error": "is_like must be true or false"}, 400
 
         # Check if reaction already exists
-        existing = ReviewReactions.query.filter_by(
-            user_id=current_user_id, review_id=review.id
-        ).first()
-
+        existing = ReviewReactions.query.filter_by(user_id=current_user_id, review_id=review.id).first()
         if existing:
             existing.is_like = is_like
             action = "updated"
         else:
-            existing = ReviewReactions(
-                user_id=current_user_id, review_id=review.id, is_like=is_like
-            )
+            existing = ReviewReactions(user_id=current_user_id, review_id=review.id, is_like=is_like)
             db.session.add(existing)
             action = "added"
 
         try:
+            db.session.commit()
+
+            # Update spare part stats (likes/dislikes)
+            review.spareparts.update_review_stats()
             db.session.commit()
         except Exception as e:
             db.session.rollback()

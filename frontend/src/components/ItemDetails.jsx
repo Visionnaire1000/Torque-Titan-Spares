@@ -66,8 +66,16 @@ const ItemDetails = () => {
       const itemData = await itemRes.json();
       const reviewData = await reviewsRes.json();
 
+      const reviewsWithUserReaction = reviewData.map((r) => {
+        const userReaction = r.likes?.find((l) => l.user_id === currentUserId);
+        return {
+          ...r,
+          user_reaction: userReaction ? (userReaction.is_like ? "like" : "dislike") : null,
+        };
+      });
+
       setItem(itemData);
-      setReviews(reviewData);
+      setReviews(reviewsWithUserReaction);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load item details");
@@ -80,7 +88,7 @@ const ItemDetails = () => {
     fetchItemAndReviews();
   }, [id]);
 
-  const averageRating = Number(item?.average_rating) || 0;
+  const averageRating = item?.average_rating ? Number(item.average_rating) : 0;
 
   const refreshItem = async () => {
     try {
@@ -179,17 +187,56 @@ const ItemDetails = () => {
 
   /* ---------- Likes/Dislikes Toggle ---------- */
   const reactToReview = (reviewId, isLike, reviewUserId) => {
-    if (reviewUserId === currentUserId) {
-      toast.info("Cannot react to your own review");
-      return;
-    }
+    if (!reviewId) return toast.error("Review ID missing");
+    if (reviewUserId === currentUserId) return toast.info("Cannot react to your own review");
 
+    setReviews((prev) =>
+      prev.map((r) => {
+        if (r.id !== reviewId) return r;
+
+        let likes = Number(r.total_likes || 0);
+        let dislikes = Number(r.total_dislikes || 0);
+
+        switch (r.user_reaction) {
+          case "like":
+            if (isLike) return { ...r, total_likes: Math.max(0, likes - 1), user_reaction: null };
+            return {
+              ...r,
+              total_likes: Math.max(0, likes - 1),
+              total_dislikes: dislikes + 1,
+              user_reaction: "dislike",
+            };
+
+          case "dislike":
+            if (!isLike) return { ...r, total_dislikes: Math.max(0, dislikes - 1), user_reaction: null };
+            return {
+              ...r,
+              total_dislikes: Math.max(0, dislikes - 1),
+              total_likes: likes + 1,
+              user_reaction: "like",
+            };
+
+          default:
+            if (isLike) likes += 1;
+            else dislikes += 1;
+            return { ...r, total_likes: likes, total_dislikes: dislikes, user_reaction: isLike ? "like" : "dislike" };
+        }
+      })
+    );
+
+    // Send to backend
     handleReviewAction({
       method: "POST",
       endpoint: `/reviews/${reviewId}/react`,
       body: { is_like: isLike },
       updateFn: (updatedReview) =>
-        setReviews((prev) => prev.map((r) => (r.id === reviewId ? updatedReview : r))),
+        setReviews((prev) =>
+          prev.map((r) =>
+            r.id === reviewId
+              ? { ...r, ...updatedReview, user_reaction: isLike ? "like" : "dislike" }
+              : r
+          )
+        ),
     });
   };
 
@@ -211,7 +258,13 @@ const ItemDetails = () => {
               <span className="discount">(-{item.discount_percentage.toFixed(0)}%)</span>
             )}
           </p>
-          <StarRating value={averageRating} readonly={true} size={22} />
+
+          {/* ---------- Average Rating ---------- */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <StarRating value={averageRating} readonly size={22} />
+            <span>{averageRating.toFixed(1)}</span>
+          </div>
+
           <button onClick={() => addItem(item)}>Add To Cart</button>
         </div>
       </div>
@@ -231,12 +284,9 @@ const ItemDetails = () => {
       {/* ---------- Reviews ---------- */}
       <div className="reviews-section">
         <h3>Customer Reviews</h3>
-
-        {/* ---------- Total Comments ---------- */}
         <p className="muted">
           {reviews.length} review{reviews.length !== 1 ? "s" : ""}
         </p>
-
         {reviews.length === 0 && <p className="muted">No reviews yet.</p>}
 
         {reviews.map((r) => (
@@ -250,7 +300,7 @@ const ItemDetails = () => {
               </>
             ) : (
               <>
-                <StarRating value={r.rating || 0} readonly={true} size={20} />
+                <StarRating value={r.rating || 0} readonly size={20} />
                 {r.comment && <p className="comment">{r.comment}</p>}
 
                 <div className="review-actions" style={{ display: "flex", flexDirection: "column" }}>
@@ -262,7 +312,10 @@ const ItemDetails = () => {
                   ) : (
                     <div style={{ display: "flex", gap: 10 }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                        <button onClick={() => reactToReview(r.id, true, r.user_id)}>
+                        <button
+                          onClick={() => reactToReview(r.id, true, r.user_id)}
+                          style={{ fontWeight: r.user_reaction === "like" ? "bold" : "normal" }}
+                        >
                           👍 {r.total_likes || 0}
                         </button>
                         <span className="muted" style={{ fontSize: 12 }}>
@@ -270,7 +323,10 @@ const ItemDetails = () => {
                         </span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                        <button onClick={() => reactToReview(r.id, false, r.user_id)}>
+                        <button
+                          onClick={() => reactToReview(r.id, false, r.user_id)}
+                          style={{ fontWeight: r.user_reaction === "dislike" ? "bold" : "normal" }}
+                        >
                           👎 {r.total_dislikes || 0}
                         </button>
                         <span className="muted" style={{ fontSize: 12 }}>

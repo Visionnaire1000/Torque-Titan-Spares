@@ -142,10 +142,11 @@ class Reviews(db.Model, SerializerMixin):
 
     #-------------------------SERIALIZE RULES-------------------------------
     serialize_rules = (
-    '-users.reviews',         # avoid recursion
-    '-spareparts.reviews',    # avoid recursion
-    '-likes.reviews',         # avoid recursion
-    )
+    '-users.reviews',         # avoids recursion
+    '-spareparts.reviews',    # avoids recursion
+    '-likes.reviews',         # avoids recursion
+    '-likes.users',           # avoid going user -> likes -> review -> user
+   )
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('rating')

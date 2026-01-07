@@ -52,11 +52,17 @@ const Cart = () => {
                   <tr key={item.id}>
                     <td>
                       <div className="item-info">
+                        <Link
+                          key={item.id}
+                          to={`/items/${item.id}`}
+                           className="item-card-link"
+                        >
                          <img
                           src={item.image}
                           alt={item.name}
                           className="cart-item-image"> 
                           </img>
+                          </Link>
                         <p id="name">{item.brand} for {item.vehicle_type} </p>
                         <p className="mobile-price">
                           KSH {item.buying_price?.toLocaleString() || '0'}
