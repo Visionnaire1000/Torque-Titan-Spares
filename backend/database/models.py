@@ -23,9 +23,14 @@ class Users(db.Model, SerializerMixin):
     reviews = db.relationship('Reviews', back_populates='users', cascade='all, delete-orphan')
     likes = db.relationship('ReviewReactions', back_populates='users', cascade='all, delete-orphan')
 
-    # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ('-password_hash','-orders.users', '-reviews.users', '-likes.users')
-
+    # ------------------------- SERIALIZE RULES--------------------------------
+    serialize_rules = (
+    '-password_hash',       
+    '-orders.users',         
+    '-reviews.users',       
+    '-likes.users',      
+     )
+    
     #--------------------------VALIDATIONS-----------------------------------
     @validates('email')
     def validate_email(self, key, value):
@@ -69,7 +74,10 @@ class SpareParts(db.Model, SerializerMixin):
     reviews = db.relationship('Reviews', back_populates='spareparts', cascade='all, delete-orphan')
 
     # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ('-order_items.sparepart','-reviews.spareparts')
+    serialize_rules = (
+    '-order_items.sparepart',   
+    '-reviews.spareparts',      
+    )
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('vehicle_type')
@@ -89,14 +97,32 @@ class SpareParts(db.Model, SerializerMixin):
             self.discount_amount = 0.0
             self.discount_percentage = 0.0
 
-        #(updates reviews stats-total likes,dislikes and average ratings)
+    #(updates reviews stats-total likes,dislikes and average ratings)
     def update_review_stats(self):
-        self.total_reviews = len(self.reviews)
-        ratings = [r.rating for r in self.reviews if r.rating is not None]
-        self.average_rating = round(sum(ratings)/len(ratings),1) if ratings else 0.0
+   
+        reviews = getattr(self, "reviews", []) or []
 
-        self.total_likes = sum(len([like for like in r.likes if like.is_like]) for r in self.reviews)
-        self.total_dislikes = sum(len([like for like in r.likes if not like.is_like]) for r in self.reviews)
+        # Total reviews
+        self.total_reviews = len(reviews)
+
+        # Average rating (only integers 1-5)
+        ratings = [r.rating for r in reviews if isinstance(r.rating, int) and 1 <= r.rating <= 5]
+        self.average_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+
+        # Total likes/dislikes
+        total_likes = 0
+        total_dislikes = 0
+        for r in reviews:
+            likes_list = getattr(r, "likes", []) or []
+            for like in likes_list:
+                is_like = getattr(like, "is_like", None)
+                if is_like is True:
+                    total_likes += 1
+                elif is_like is False:
+                    total_dislikes += 1
+
+        self.total_likes = total_likes
+        self.total_dislikes = total_dislikes
 
 #------------------------------REVIEWS MODEL---------------------------------
 class Reviews(db.Model, SerializerMixin):
@@ -115,7 +141,11 @@ class Reviews(db.Model, SerializerMixin):
     likes = db.relationship('ReviewReactions', back_populates='reviews', cascade='all, delete-orphan')
 
     #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-users.reviews', '-spareparts.reviews', '-likes.reviews')
+    serialize_rules = (
+    '-users.reviews',         # avoid recursion
+    '-spareparts.reviews',    # avoid recursion
+    '-likes.reviews',         # avoid recursion
+    )
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('rating')
@@ -138,7 +168,11 @@ class ReviewReactions(db.Model, SerializerMixin):
     reviews = db.relationship('Reviews', back_populates='likes')
 
     #-------------------------SERIALIZE RULES-------------------------------
-    serialize_rules = ('-users.likes', '-reviews.likes')
+    serialize_rules = (
+    '-users.likes',           # avoid recursion
+    '-reviews.likes',         # avoid recursion
+    '-reviews.users',         # lean output
+    )
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('is_like')
@@ -147,6 +181,7 @@ class ReviewReactions(db.Model, SerializerMixin):
             raise ValueError("is_like must be True or False")
         return value
     
+  
 #------------------------------ORDERS MODEL---------------------------------
 class Orders(db.Model, SerializerMixin):
     __tablename__ = "orders"
@@ -216,21 +251,32 @@ def sparepart_before_insert(mapper, connection, target):
 def sparepart_before_update(mapper, connection, target):
     target.calculate_discount()
 
+# Reviews listeners
 @event.listens_for(Reviews, "after_insert")
 @event.listens_for(Reviews, "after_update")
 @event.listens_for(Reviews, "after_delete")
 def review_change(mapper, connection, target):
-    if target.sparepart:
-        target.sparepart.update_review_stats()
-        db.session.commit()
+    sparepart = getattr(target, "sparepart", None)
+    if sparepart:
+        try:
+            sparepart.update_review_stats()
+            # Do NOT call db.session.commit() here!
+        except Exception as e:
+            print(f"[review_change] Error updating review stats: {e}")
 
+
+# ReviewReactions listeners
 @event.listens_for(ReviewReactions, "after_insert")
 @event.listens_for(ReviewReactions, "after_update")
 @event.listens_for(ReviewReactions, "after_delete")
 def reaction_change(mapper, connection, target):
-    if target.review and target.review.sparepart:
-        target.review.sparepart.update_review_stats()
-        db.session.commit()
+    sparepart = getattr(getattr(target, "review", None), "sparepart", None)
+    if sparepart:
+        try:
+            sparepart.update_review_stats()
+            # Do NOT call db.session.commit() here!
+        except Exception as e:
+            print(f"[reaction_change] Error updating review stats for reaction: {e}")
 
 @event.listens_for(OrderItems, "before_insert")
 def orderitem_before_insert(mapper, connection, target):

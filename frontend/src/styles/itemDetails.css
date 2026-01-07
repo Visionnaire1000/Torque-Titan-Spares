@@ -1,0 +1,197 @@
+/* ---------------------- General Layout ---------------------- */
+.item-details {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #fefefe;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* ---------------------- Item Main ---------------------- */
+.item-main {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.item-main img {
+  max-width: 300px;
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.item-info h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.price .discount {
+  font-size: 0.9rem;
+  color: #ff4d4f;
+  margin-left: 0.5rem;
+}
+
+.item-info button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background-color: #5a4080;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.item-info button:hover {
+  background-color: #7b55a6;
+}
+
+/* ---------------------- Star Ratings ---------------------- */
+.stars {
+  display: flex;
+  gap: 2px;
+  margin: 0.5rem 0;
+}
+
+.star {
+  color: #ffd700;
+}
+
+.star.empty {
+  color: #ddd;
+}
+
+.star.half {
+  color: #ffd700;
+}
+
+/* ---------------------- Add Review ---------------------- */
+.add-review {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.add-review h3 {
+  margin-bottom: 0.5rem;
+}
+
+.add-review textarea {
+  width: 100%;
+  min-height: 80px;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.add-review button {
+  padding: 0.5rem 1rem;
+  background-color: #5a4080;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-review button:hover {
+  background-color: #7b55a6;
+}
+
+/* ---------------------- Reviews Section ---------------------- */
+.reviews-section {
+  margin-top: 2rem;
+}
+
+.reviews-section h3 {
+  margin-bottom: 0.3rem;
+}
+
+.muted {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.review-card {
+  background-color: #fafafa;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.review-card .comment {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+/* ---------------------- Review Actions ---------------------- */
+.review-actions button {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.review-actions button:hover {
+  background-color: #e0d7f0;
+}
+
+.review-actions div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.review-actions span.muted {
+  margin-top: 2px;
+  font-size: 0.8rem;
+}
+
+/* ---------------------- Edit Review ---------------------- */
+.review-card textarea {
+  width: 100%;
+  min-height: 60px;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+
+.review-card button {
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: #5a4080;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+}
+
+.review-card button:hover {
+  background-color: #7b55a6;
+}

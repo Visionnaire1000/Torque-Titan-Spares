@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "../styles/paymentSuccess.css";
 
 const PaymentSuccess = () => {
   const { clearCart } = useCart();

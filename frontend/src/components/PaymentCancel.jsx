@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const PaymentCancel = () => {
   const hasRun = useRef(false);

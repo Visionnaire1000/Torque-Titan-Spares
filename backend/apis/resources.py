@@ -156,68 +156,181 @@ class SparePartsList(Resource):
     
 # ------------------ Reviews ------------------
 class ReviewsResource(Resource):
-    @jwt_required()
-    def post(self, part_id):
-        current_user_id = get_jwt_identity()
-        data = request.get_json()
-        review = Reviews(user_id=current_user_id, sparepart_id=part_id)
-        if 'rating' in data:
-            review.rating = data['rating']
-        if 'comment' in data:
-            review.comment = data['comment']
-        db.session.add(review)
-        db.session.commit()
-        return review.to_dict(), 201
+    def get(self, part_id):
+        """Get all reviews for a spare part"""
+        part = SpareParts.query.get_or_404(part_id)
+
+        reviews = Reviews.query.filter_by(
+            sparepart_id=part.id
+        ).order_by(Reviews.id.desc()).all()
+
+        return [r.to_dict() for r in reviews], 200
 
     @jwt_required()
-    def patch(self, review_id):
+    def post(self, part_id):
+        """Create a review (rating and/or comment)"""
         current_user_id = get_jwt_identity()
+
+        user = Users.query.get(current_user_id)
+        if not user:
+            return {"error": "Invalid user"}, 401
+
+        part = SpareParts.query.get_or_404(part_id)
+
+        data = request.get_json() or {}
+
+        rating = data.get("rating")
+        comment = data.get("comment")
+
+        # ---- Validate rating ----
+        parsed_rating = None
+        if rating is not None:
+            try:
+                rating = int(rating)
+                if not 1 <= rating <= 5:
+                    return {"error": "Rating must be between 1 and 5"}, 400
+                parsed_rating = rating
+            except (ValueError, TypeError):
+                return {"error": "Rating must be an integer"}, 400
+
+        # ---- Validate comment ----
+        parsed_comment = None
+        if isinstance(comment, str) and comment.strip():
+            parsed_comment = comment.strip()
+
+        if parsed_rating is None and not parsed_comment:
+            return {"error": "Add a rating or comment"}, 400
+
+        # ---- Optional: prevent duplicate reviews per user per part ----
+        existing = Reviews.query.filter_by(
+            user_id=current_user_id,
+            sparepart_id=part.id
+        ).first()
+
+        if existing:
+            return {"error": "You have already reviewed this item"}, 409
+
+        review = Reviews(
+            user_id=current_user_id,
+            sparepart_id=part.id,
+            rating=parsed_rating,
+            comment=parsed_comment
+        )
+
+        try:
+            db.session.add(review)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return {"error": "Failed to save review"}, 500
+
+        return review.to_dict(), 201
+
+class ReviewEditResource(Resource):
+    @jwt_required()
+    def patch(self, review_id):
+        """Edit a review (owner only)"""
+        current_user_id = get_jwt_identity()
+
         review = Reviews.query.get_or_404(review_id)
+
         if review.user_id != current_user_id:
             return {"error": "Cannot edit others' reviews"}, 403
-        data = request.get_json()
-        if 'rating' in data:
-            review.rating = data['rating']
-        if 'comment' in data:
-            review.comment = data['comment']
-        db.session.commit()
+
+        data = request.get_json() or {}
+
+        # ---- Rating ----
+        if "rating" in data:
+            rating = data.get("rating")
+            if rating is None:
+                review.rating = None
+            else:
+                try:
+                    rating = int(rating)
+                    if not 1 <= rating <= 5:
+                        return {"error": "Rating must be between 1 and 5"}, 400
+                    review.rating = rating
+                except (ValueError, TypeError):
+                    return {"error": "Rating must be an integer"}, 400
+
+        # ---- Comment ----
+        if "comment" in data:
+            comment = data.get("comment")
+            if comment is None or not isinstance(comment, str) or not comment.strip():
+                review.comment = None
+            else:
+                review.comment = comment.strip()
+
+        if review.rating is None and not review.comment:
+            return {"error": "Review must have a rating or comment"}, 400
+
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return {"error": "Failed to update review"}, 500
+
         return review.to_dict(), 200
 
     @jwt_required()
     def delete(self, review_id):
+        """Delete a review (owner only)"""
         current_user_id = get_jwt_identity()
+
         review = Reviews.query.get_or_404(review_id)
+
         if review.user_id != current_user_id:
             return {"error": "Cannot delete others' reviews"}, 403
-        db.session.delete(review)
-        db.session.commit()
-        return {"message": "Review deleted"}, 200
 
+        try:
+            db.session.delete(review)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return {"error": "Failed to delete review"}, 500
+
+        return {"message": "Review deleted"}, 200
 
 class ReviewReactionsResource(Resource):
     @jwt_required()
     def post(self, review_id):
+        """React to a review (like/dislike)"""
         current_user_id = get_jwt_identity()
-        data = request.get_json()
-        is_like = data.get('is_like')
-        reaction = ReviewReactions.query.filter_by(user_id=current_user_id, review_id=review_id).first()
-        if reaction:
-            reaction.is_like = is_like
+        user = Users.query.get(current_user_id)
+        if not user:
+            return {"error": "Invalid user"}, 401
+
+        review = Reviews.query.get_or_404(review_id)
+        if review.user_id == current_user_id:
+            return {"error": "Cannot react to your own review"}, 400
+
+        data = request.get_json() or {}
+        is_like = data.get("is_like")
+        if not isinstance(is_like, bool):
+            return {"error": "is_like must be true or false"}, 400
+
+        # Check if reaction already exists
+        existing = ReviewReactions.query.filter_by(
+            user_id=current_user_id, review_id=review.id
+        ).first()
+
+        if existing:
+            existing.is_like = is_like
+            action = "updated"
         else:
-            reaction = ReviewReactions(user_id=current_user_id, review_id=review_id, is_like=is_like)
-            db.session.add(reaction)
-        db.session.commit()
-        return {"message": "Reaction updated"}, 200
+            existing = ReviewReactions(
+                user_id=current_user_id, review_id=review.id, is_like=is_like
+            )
+            db.session.add(existing)
+            action = "added"
 
-    @jwt_required()
-    def delete(self, review_id):
-        current_user_id = get_jwt_identity()
-        reaction = ReviewReactions.query.filter_by(user_id=current_user_id, review_id=review_id).first()
-        if reaction:
-            db.session.delete(reaction)
+        try:
             db.session.commit()
-        return {"message": "Reaction removed"}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
 
+        return {"message": f"Reaction {action}"}, 200
 
 # ------------------ Orders ------------------
 class OrdersResource(Resource):
@@ -291,8 +404,8 @@ class AdminOrders(Resource):
         if not new_status:
             return {"error": "Missing status field"}, 400
 
-        # Example allowed transitions for admin
-        allowed_statuses = ["pending", "cancelled", "delivered"]
+        # allowed transitions for admin
+        allowed_statuses = ["pending", "cancelled","shipped","delivered"]
         if new_status not in allowed_statuses:
             return {"error": f"Invalid status. Allowed: {allowed_statuses}"}, 400
 
