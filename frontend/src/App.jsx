@@ -20,6 +20,7 @@ import Login from "./components/Login";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
 import ItemDetails from "./components/ItemDetails";
+import SearchBar from './components/SearchBar';
 import StripeCheckout from "./components/StripeCheckout";
 import PaymentSuccess from "./components/PaymentSuccess"; 
 import PaymentCancel from "./components/PaymentCancel"; 
@@ -45,6 +46,7 @@ function App() {
                   } 
               />
               <Route path="/items/:id" element={<ItemDetails />} /> 
+              <Route path="/search" element={<SearchBar />} />
               <Route 
                   path="/checkout" 
                   element={

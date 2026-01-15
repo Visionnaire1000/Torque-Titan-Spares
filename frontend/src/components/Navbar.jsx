@@ -1,62 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Select, { components } from 'react-select';
 import { ShoppingCart, Menu } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import config from '../config';
 import '../styles/navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [allItems, setAllItems] = useState([]);
-  const [filteredOptions, setFilteredOptions] = useState([]);
-  const [inputValue, setInputValue] = useState('');
-  const [selectedOption, setSelectedOption] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch(`${config.API_BASE_URL}/spareparts`)
-      .then(res => res.json())
-      .then(data => setAllItems(data));
-  }, []);
-
-  const handleInputChange = (input) => {
-    setInputValue(input);
-    const search = input.toLowerCase();
-    const filtered = allItems
-      .filter(item => item.name.toLowerCase().includes(search) || item.brand.toLowerCase().includes(search) || item.category.toLowerCase().includes(search))
-      .map(item => ({
-        label: `${item.name} (${item.brand}, ${item.category})`,
-        value: item.name.toLowerCase().replace(/\s+/g, '-')
-      }));
-    setFilteredOptions(filtered);
-  };
-
-  const handleSearch = () => {
-    const searchQuery = selectedOption?.value || inputValue.trim().toLowerCase();
-    if (searchQuery) navigate(`/search-results?query=${encodeURIComponent(searchQuery)}`);
-  };
 
   const handleSelectNavigate = (e) => {
     if (e.target.value) navigate(`/${e.target.value}`);
   };
 
-  const handleSelectChange = (option) => {
-    setSelectedOption(option);
-    if (option) navigate(`/search?query=${encodeURIComponent(option.label)}`);
-  };
-
-  const CustomOption = (props) => (
-    <components.Option {...props}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <i className="fa fa-search" aria-hidden="true" />
-        {props.data.label}
-      </span>
-    </components.Option>
-  );
 
   return (
     <nav className={`navbar ${user ? 'logged-in' : 'logged-out'}`}>
@@ -74,9 +32,6 @@ const Navbar = () => {
           <div className="dropdown-menu">
             <Link to="/">Home</Link>
             <Link to="/">My Account</Link>
-            <Link to="/marketplace">Marketplace</Link>
-            <Link to="/farmer">Farmer Dashboard</Link>
-            <Link to="/">Theme</Link>
             {user && <button onClick={() => { logout(); navigate('/login'); }}>Logout</button>}
           </div>
         )}
@@ -95,40 +50,17 @@ const Navbar = () => {
           </select>
         ))}
       </div>
-
-      {/* Smart search */}
+      {/* Smart search (icon only) */}
       <div className="navbar-smart-search">
-        <Select
-          className="smart-select"
-          options={filteredOptions}
-          onInputChange={handleInputChange}
-          onChange={handleSelectChange}
-          placeholder="Search item..."
-          isClearable
-          inputValue={inputValue}
-          components={{ Option: CustomOption }}
-          styles={{
-            container: (base) => ({ ...base, width: '200px' }),
-            menu: (base) => ({ ...base, backgroundColor: 'rgba(8, 18, 30, 0.856)', zIndex: 1000, width: '400px', borderRadius: '12px' }),
-            menuList: (base) => ({ ...base, padding: 0, borderRadius: '12px' }),
-            option: (base, { isFocused }) => ({
-              ...base,
-              backgroundColor: isFocused ? 'rgba(107, 114, 123, 0.89)' : 'rgba(8, 18, 30, 0.856)',
-              color: 'white',
-              cursor: 'pointer',
-              padding: '10px 15px',
-              borderRadius: '4px',
-            }),
-            singleValue: (base) => ({ ...base, color: '#000' }),
-            placeholder: (base) => ({ ...base, color: '#666' }),
-            input: (base) => ({ ...base, color: '#000' }),
-          }}
-        />
-        <button onClick={handleSearch} className="navbar-search-button" title="Search">
-          <i className="fa fa-search" />
-        </button>
-      </div>
-
+      <button
+        className="navbar-search-icon"
+        title="Search"
+        aria-label="Open search"
+        onClick={() => navigate('/search')}
+      >
+         <i className="fa fa-search" />
+      </button>
+     </div>
       {/* Right section */}
       <div className="right-section">
         <Link to="/cart" className="cart">

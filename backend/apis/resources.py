@@ -4,7 +4,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from datetime import timedelta
 from sqlalchemy import desc, asc, func
 from core.extensions import db
-from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
+from database.models import Users, SpareParts, Orders, Reviews, ReviewReactions
 
 # ------------------ Auth ------------------
 class Register(Resource):
@@ -194,13 +194,12 @@ class ReviewsResource(Resource):
         if parsed_rating is None and not parsed_comment:
             return {"error": "Add a rating or comment"}, 400
 
-        # ---- Optional: prevent duplicate reviews per user per part ----
+        # ---- prevent duplicate reviews per user per part ----
         existing = Reviews.query.filter_by(user_id=current_user_id, sparepart_id=part.id).first()
         if existing:
             return {"error": "You have already reviewed this item"}, 409
 
         review = Reviews(
-            id=generate_uuid(),
             user_id=current_user_id,
             sparepart_id=part.id,
             rating=parsed_rating,
