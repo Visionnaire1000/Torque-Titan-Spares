@@ -63,14 +63,11 @@ const Cart = () => {
                           className="cart-item-image"> 
                           </img>
                           </Link>
-                        <p id="name">{item.brand} for {item.vehicle_type} </p>
-                        <p className="mobile-price">
-                          KSH {item.buying_price?.toLocaleString() || '0'}
-                        </p>
+                        <p id="name">{item.brand} {item.category} for {item.vehicle_type} </p>
                       </div>
                     </td>
-                    <td className="hide-on-mobile">
-                      KSH {item.buying_price?.toLocaleString() || '0'}
+                    <td id="cart-price">
+                      KES {item.buying_price?.toLocaleString() || '0'}
                     </td>
                     <td>
                       <div className="quantity-control">
@@ -83,8 +80,8 @@ const Cart = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="hide-on-mobile">
-                      KSH {((item.buying_price || 0) * (item.quantity || 1)).toLocaleString()}
+                    <td id="cart-price">
+                      KES {((item.buying_price || 0) * (item.quantity || 1)).toLocaleString()}
                     </td>
                     <td>
                       <button
@@ -119,11 +116,11 @@ const Cart = () => {
           <div className="summary-details">
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>KSH {total.toLocaleString()}</span>
+              <span className='price'>KES {total.toLocaleString()}</span>
             </div>
             <div className="summary-row total">
               <span>Total</span>
-              <span>KSH {total.toLocaleString()}</span>
+              <span className='price'>KES {total.toLocaleString()}</span>
             </div>
           </div>
 

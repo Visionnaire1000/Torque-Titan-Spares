@@ -90,26 +90,23 @@ class CreateAdmin(Resource):
         db.session.commit()
         return {"message": "Admin account created"}, 201
 
-
 # ------------------ Spare Parts ------------------
 class SparePartsList(Resource):
     @jwt_required(optional=True)
     def get(self, part_id=None):
-        # --------- If part_id is provided, return single spare part ---------
         if part_id:
             part = SpareParts.query.get_or_404(part_id)
             result = part.to_dict()
             result['reviews'] = [r.to_dict() for r in part.reviews]
             return result, 200
 
-        # --------- Otherwise, return list of spare parts ---------
         args = request.args
         page = args.get("page", 1, type=int)
         per_page = args.get("per_page", 16, type=int)
 
         query = SpareParts.query
 
-        # Filters
+        # ---------------- Filters ----------------
         if args.get('category'):
             query = query.filter(SpareParts.category.ilike(f"%{args.get('category')}%"))
         if args.get('brand'):
@@ -119,33 +116,35 @@ class SparePartsList(Resource):
         if args.get('colour'):
             query = query.filter(SpareParts.colour.ilike(f"%{args.get('colour')}%"))
 
-        # Sorting
-        sort = args.get('sort')
-        if sort == "discount":
-            query = query.order_by(desc(SpareParts.discount_percentage)).limit(16)
-            items = query.all()
-            return {
-                "items": [p.to_dict() for p in items],
-                "total": len(items),
-                "page": 1,
-                "pages": 1
-            }, 200
-        elif sort == "price_high":
-            query = query.order_by(desc(SpareParts.marked_price))
-        elif sort == "price_low":
-            query = query.order_by(asc(SpareParts.marked_price))
-        elif sort == "price_mid":
-            avg_price = db.session.query(func.avg(SpareParts.marked_price)).scalar() or 0
-            query = query.order_by(func.abs(SpareParts.marked_price - avg_price))
-        elif sort == "rating_high":
-            query = query.order_by(desc(SpareParts.average_rating))
-        elif sort == "rating_low":
-            query = query.order_by(asc(SpareParts.average_rating))
-        elif sort == "rating_mid":
-            avg_rating = db.session.query(func.avg(SpareParts.average_rating)).scalar() or 0
-            query = query.order_by(func.abs(SpareParts.average_rating - avg_rating))
+        # ---------------- Price Filter (Dynamic, including high) ----------------
+        price_filter = args.get('price')
+        vehicle_type = (args.get('vehicle_type') or '').lower()
 
-        # Pagination
+        # Define price ranges per vehicle type
+        PRICE_RANGES = {
+            "sedan": {"low": 15000, "medium": 30000, "high": None}, 
+            "suv": {"low": 25000, "medium": 40000, "high": None},    
+            "truck": {"low": 35000, "medium": 45000, "high": None},  
+            "bus": {"low": 25000, "medium": 30000, "high": None}     
+        }
+
+        # Fallback to sedan if unknown vehicle type
+        ranges = PRICE_RANGES.get(vehicle_type, PRICE_RANGES["sedan"])
+
+        if price_filter:
+            if price_filter == "low":
+                query = query.filter(SpareParts.buying_price < ranges["low"])
+            elif price_filter == "medium":
+                query = query.filter(
+                    SpareParts.buying_price >= ranges["low"],
+                    SpareParts.buying_price <= ranges["medium"]
+                )
+            elif price_filter == "high":
+                
+                # High is anything above the medium threshold
+                query = query.filter(SpareParts.buying_price > ranges["medium"])
+
+        # ---------------- Pagination ----------------
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         return {
             "items": [p.to_dict() for p in pagination.items],

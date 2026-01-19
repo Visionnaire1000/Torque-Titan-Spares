@@ -37,19 +37,29 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Categories */}
-      <div className="categories">
-        {['TYRES', 'RIMS', 'BATTERIES', 'OIL FILTERS'].map(cat => (
-          <select key={cat} defaultValue="" onChange={handleSelectNavigate}>
-            <option disabled value="">{cat}</option>
-            {['sedan', 'suv', 'truck', 'bus'].map(type => (
-              <option key={type} value={`${type.toLowerCase()}-${cat.toLowerCase().replace(' ', '-')}`}>
-                {type.toUpperCase()} {cat}
-              </option>
-            ))}
-          </select>
-        ))}
-      </div>
+     {/* Categories */}
+     <div className="categories">
+      {[
+        { label: 'TYRES', path: 'tyres' },
+        { label: 'RIMS', path: 'rims' },
+        { label: 'BATTERIES', path: 'batteries' },
+        { label: 'OIL FILTERS', path: 'filters' },
+      ].map(({ label, path }) => (
+      <select key={label} defaultValue="" onChange={handleSelectNavigate}>
+      <option value="" disabled>{label}</option>
+
+      {['sedan', 'suv', 'truck', 'bus'].map(type => (
+        <option
+          key={type}
+          value={`${type}-${path}`}
+        >
+          {type.toUpperCase()} {label}
+        </option>
+       ))}
+      </select>
+     ))}
+     </div>
+     
       {/* Smart search (icon only) */}
       <div className="navbar-smart-search">
       <button

@@ -250,14 +250,16 @@ const ItemDetails = () => {
         <img src={item.image} alt={item.brand} />
         <div className="item-info">
           <h2>
-            {item.brand} for {item.vehicle_type}
+            {item.brand} {item.category} for {item.vehicle_type} 
           </h2>
-          <p className="price">
-            KSH {item.buying_price}
-            {item.discount_percentage > 0 && (
-              <span className="discount">(-{item.discount_percentage.toFixed(0)}%)</span>
-            )}
-          </p>
+           <p id='price'>
+                KES {item.buying_price?.toLocaleString() || '0'}
+                {item.discount_percentage > 0 && (
+                  <span id="discount">
+                    (-{item.discount_percentage.toFixed(0)}%)
+                  </span>
+                )}
+            </p>
 
           {/* ---------- Average Rating ---------- */}
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>

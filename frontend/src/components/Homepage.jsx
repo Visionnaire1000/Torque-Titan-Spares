@@ -65,8 +65,8 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [spareParts]);
 
-  if (loading) return <div className="homepage">Loading...</div>;
-  if (!spareParts.length) return <div className="homepage">No spare parts found.</div>;
+  if (loading) return <div className="message">Loading...</div>;
+  if (!spareParts.length) return <div className="message">No spare parts found.</div>;
 
   const handleAddToCart = (item, e) => {
     e.preventDefault();
@@ -95,17 +95,15 @@ const HomePage = () => {
           >
             <div className="item-card">
               <img src={item.image} alt={item.brand} />
-              <h4>{item.brand} for {item.vehicle_type}</h4>
-
-              <p id="price">
-                KSH {item.buying_price}
+              <h4>{item.brand} {item.category} for {item.vehicle_type}</h4>
+              <p className='price'>
+                KES {item.buying_price?.toLocaleString() || '0'}
                 {item.discount_percentage > 0 && (
                   <span className="discount">
                     (-{item.discount_percentage.toFixed(0)}%)
                   </span>
                 )}
               </p>
-
               <button
                 className="add-to-cart"
                 onClick={(e) => handleAddToCart(item, e)}
@@ -130,10 +128,9 @@ const HomePage = () => {
               >
                 <div className="item-card">
                   <img src={item.image} alt={item.brand} />
-                  <h4>{item.brand} for {item.vehicle_type}</h4>
-
-                  <p id="price">
-                    KSH {item.buying_price}
+                  <h4>{item.brand} {item.category} for {item.vehicle_type}</h4>
+                  <p className='price'>
+                    KES {item.buying_price?.toLocaleString() || '0'}
                     {item.discount_percentage > 0 && (
                       <span className="discount">
                         (-{item.discount_percentage.toFixed(0)}%)

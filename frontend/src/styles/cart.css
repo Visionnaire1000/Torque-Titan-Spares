@@ -40,7 +40,7 @@ p{
 }
 
 .cart-item-image {
-  width: 60%;
+  width: 80%;
   height: 50%;
   object-fit: cover;
   border-radius: 4px;
@@ -99,18 +99,16 @@ p{
   margin-top: 0.25rem;
 }
 
-.mobile-price {
-  display: none;
+#cart-price {
+  color: red;
+  font-size: medium;
+  font-weight: 600;
 }
 
-@media (max-width: 640px) {
-  .hide-on-mobile {
-    display: none;
-  }
-  .mobile-price {
-    display: block;
-    margin-top: 0.5rem;
-  }
+.price {
+  color: red;
+  margin-top: 2px;
+  font-size: large;
 }
 
 .quantity-control {
