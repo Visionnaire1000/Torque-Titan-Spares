@@ -30,7 +30,7 @@ import SedanTyres from "./components/categories/SedanTyres";
 import SUVTyres from "./components/categories/SUVTyres";
 import TruckTyres from "./components/categories/TruckTyres";
 import BusTyres from "./components/categories/BusTyres";
-/*import SedanRims from "./components/categories/SedanRims";
+import SedanRims from "./components/categories/SedanRims";
 import SUVRims from "./components/categories/SUVRims";
 import TruckRims from "./components/categories/TruckRims";
 import BusRims from "./components/categories/BusRims";
@@ -38,7 +38,7 @@ import SedanBatteries from "./components/categories/SedanBatteries";
 import SUVBatteries from "./components/categories/SUVBatteries";
 import TruckBatteries from "./components/categories/TruckBatteries";
 import BusBatteries from "./components/categories/BusBatteries";
-import SedanFilters from "./components/categories/SedanFilters";
+/*import SedanFilters from "./components/categories/SedanFilters";
 import SUVFilters from "./components/categories/SUVFilters";
 import TruckFilters from "./components/categories/TruckFilters";
 import BusFilters from "./components/categories/BusFilters"; */
@@ -95,8 +95,7 @@ function App() {
               <Route path="/suv-tyres" element={<SUVTyres />} />
               <Route path="/truck-tyres" element={<TruckTyres />} />
               <Route path="/bus-tyres" element={<BusTyres />} />
-            </Routes>
-             {/*<Route path="/sedan-rims" element={<SedanRims />} />
+              <Route path="/sedan-rims" element={<SedanRims />} />
               <Route path="/suv-rims" element={<SUVRims />} />
               <Route path="/truck-rims" element={<TruckRims />} />
               <Route path="/bus-rims" element={<BusRims />} />
@@ -104,6 +103,8 @@ function App() {
               <Route path="/suv-batteries" element={<SUVBatteries />} />
               <Route path="/truck-batteries" element={<TruckBatteries />} />
               <Route path="/bus-batteries" element={<BusBatteries />} />
+            </Routes>
+              {/*
               <Route path="/sedan-filters" element={<SedanFilters />} />
               <Route path="/suv-filters" element={<SUVFilters />} />
               <Route path="/truck-filters" element={<TruckFilters />} />

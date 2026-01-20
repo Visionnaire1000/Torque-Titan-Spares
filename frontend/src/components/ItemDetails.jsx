@@ -260,6 +260,7 @@ const ItemDetails = () => {
                   </span>
                 )}
             </p>
+          <p id="describe">{item.description}</p>
 
           {/* ---------- Average Rating ---------- */}
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>

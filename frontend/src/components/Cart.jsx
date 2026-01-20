@@ -115,8 +115,6 @@ const Cart = () => {
         <div className="order-summary">
           <div className="summary-details">
             <div className="summary-row">
-              <span>Subtotal</span>
-              <span className='price'>KES {total.toLocaleString()}</span>
             </div>
             <div className="summary-row total">
               <span>Total</span>

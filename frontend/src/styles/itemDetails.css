@@ -68,6 +68,11 @@
   background-color: rgb(17, 49, 82);
 }
 
+#describe{
+  color: black;
+  font-weight: 400;
+}
+
 /* ---------------------- Star Ratings ---------------------- */
 .stars {
   display: flex;

@@ -91,13 +91,16 @@ class CreateAdmin(Resource):
         return {"message": "Admin account created"}, 201
 
 # ------------------ Spare Parts ------------------
+
 class SparePartsList(Resource):
     @jwt_required(optional=True)
     def get(self, part_id=None):
+
+        # ---------------- Single Item ----------------
         if part_id:
             part = SpareParts.query.get_or_404(part_id)
             result = part.to_dict()
-            result['reviews'] = [r.to_dict() for r in part.reviews]
+            result["reviews"] = [r.to_dict() for r in part.reviews]
             return result, 200
 
         args = request.args
@@ -106,53 +109,90 @@ class SparePartsList(Resource):
 
         query = SpareParts.query
 
-        # ---------------- Filters ----------------
-        if args.get('category'):
-            query = query.filter(SpareParts.category.ilike(f"%{args.get('category')}%"))
-        if args.get('brand'):
-            query = query.filter(SpareParts.brand.ilike(f"%{args.get('brand')}%"))
-        if args.get('vehicle_type'):
-            query = query.filter(SpareParts.vehicle_type.ilike(f"%{args.get('vehicle_type')}%"))
-        if args.get('colour'):
-            query = query.filter(SpareParts.colour.ilike(f"%{args.get('colour')}%"))
+        # ---------------- Basic Filters ----------------
+        category = (args.get("category") or "").lower()
+        vehicle_type = (args.get("vehicle_type") or "").lower()
+        brand = args.get("brand")
+        colour = args.get("colour")
 
-        # ---------------- Price Filter (Dynamic, including high) ----------------
-        price_filter = args.get('price')
-        vehicle_type = (args.get('vehicle_type') or '').lower()
+        if category:
+            query = query.filter(SpareParts.category.ilike(f"%{category}%"))
 
-        # Define price ranges per vehicle type
+        if brand:
+            query = query.filter(SpareParts.brand.ilike(f"%{brand}%"))
+
+        if vehicle_type:
+            query = query.filter(SpareParts.vehicle_type.ilike(f"%{vehicle_type}%"))
+
+        if colour:
+            query = query.filter(SpareParts.colour.ilike(f"%{colour}%"))
+
+        # ---------------- Price Filter (Category + Vehicle Type aware) ----------------
+        price_filter = args.get("price")
+
         PRICE_RANGES = {
-            "sedan": {"low": 15000, "medium": 30000, "high": None}, 
-            "suv": {"low": 25000, "medium": 40000, "high": None},    
-            "truck": {"low": 35000, "medium": 45000, "high": None},  
-            "bus": {"low": 25000, "medium": 30000, "high": None}     
+            "tyre": {
+                "sedan": {"low": 15000, "medium": 30000},
+                "suv": {"low": 25000, "medium": 40000},
+                "truck": {"low": 35000, "medium": 45000},
+                "bus": {"low": 25000, "medium": 30000},
+            },
+            "rim": {
+                "sedan": {"low": 20000, "medium": 30000},
+                "suv": {"low": 25000, "medium": 35000},
+                "truck": {"low": 30000, "medium": 35000},
+                "bus": {"low": 25000, "medium": 30000},
+            },
+            "battery": {
+                "sedan": {"low": 8000, "medium": 15000},
+                "suv": {"low": 12000, "medium": 22000},
+                "truck": {"low": 20000, "medium": 35000},
+                "bus": {"low": 25000, "medium": 40000},
+            },
+            "oil filter": {
+                "default": {"low": 1000, "medium": 3000},
+            }
         }
 
-        # Fallback to sedan if unknown vehicle type
-        ranges = PRICE_RANGES.get(vehicle_type, PRICE_RANGES["sedan"])
+        ranges = None
+        category_ranges = PRICE_RANGES.get(category)
 
-        if price_filter:
+        if category_ranges:
+            ranges = (
+                category_ranges.get(vehicle_type)
+                or category_ranges.get("default")
+            )
+
+        if price_filter and ranges:
+            low = ranges["low"]
+            medium = ranges["medium"]
+
             if price_filter == "low":
-                query = query.filter(SpareParts.buying_price < ranges["low"])
+                query = query.filter(SpareParts.buying_price < low)
+
             elif price_filter == "medium":
                 query = query.filter(
-                    SpareParts.buying_price >= ranges["low"],
-                    SpareParts.buying_price <= ranges["medium"]
+                    SpareParts.buying_price >= low,
+                    SpareParts.buying_price <= medium
                 )
+
             elif price_filter == "high":
-                
-                # High is anything above the medium threshold
-                query = query.filter(SpareParts.buying_price > ranges["medium"])
+                query = query.filter(SpareParts.buying_price > medium)
 
         # ---------------- Pagination ----------------
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
         return {
             "items": [p.to_dict() for p in pagination.items],
             "total": pagination.total,
             "page": pagination.page,
             "pages": pagination.pages
         }, 200
-
+    
 # ------------------ Reviews ------------------
 class ReviewsResource(Resource):
     def get(self, part_id):
