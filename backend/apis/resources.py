@@ -144,13 +144,13 @@ class SparePartsList(Resource):
                 "bus": {"low": 25000, "medium": 30000},
             },
             "battery": {
-                "sedan": {"low": 8000, "medium": 15000},
-                "suv": {"low": 12000, "medium": 22000},
-                "truck": {"low": 20000, "medium": 35000},
-                "bus": {"low": 25000, "medium": 40000},
+                "sedan": {"low": 20000, "medium": 30000},
+                "suv": {"low": 26000, "medium": 35000},
+                "truck": {"low": 26000, "medium": 35000},
+                "bus": {"low": 35000, "medium": 40000},
             },
             "oil filter": {
-                "default": {"low": 1000, "medium": 3000},
+                "default": {"low": 7500, "medium": 8500},
             }
         }
 

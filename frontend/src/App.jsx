@@ -38,10 +38,10 @@ import SedanBatteries from "./components/categories/SedanBatteries";
 import SUVBatteries from "./components/categories/SUVBatteries";
 import TruckBatteries from "./components/categories/TruckBatteries";
 import BusBatteries from "./components/categories/BusBatteries";
-/*import SedanFilters from "./components/categories/SedanFilters";
+import SedanFilters from "./components/categories/SedanFilters";
 import SUVFilters from "./components/categories/SUVFilters";
 import TruckFilters from "./components/categories/TruckFilters";
-import BusFilters from "./components/categories/BusFilters"; */
+import BusFilters from "./components/categories/BusFilters"; 
  
 
 function App() {
@@ -103,12 +103,11 @@ function App() {
               <Route path="/suv-batteries" element={<SUVBatteries />} />
               <Route path="/truck-batteries" element={<TruckBatteries />} />
               <Route path="/bus-batteries" element={<BusBatteries />} />
-            </Routes>
-              {/*
               <Route path="/sedan-filters" element={<SedanFilters />} />
               <Route path="/suv-filters" element={<SUVFilters />} />
               <Route path="/truck-filters" element={<TruckFilters />} />
-              <Route path="/bus-filters" element={<BusFilters />} />  */}
+              <Route path="/bus-filters" element={<BusFilters />} />  
+            </Routes>
           </main>
           <Footer />
         </div>

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import config from '../../config';
-import "../../styles/rims.css";
+import "../../styles/batteries.css";
 
-const BusRims = () => {
+const SedanBatteries = () => {
   const [items, setItems] = useState([]);
   const [brand, setBrand] = useState('');
   const [colour, setColour] = useState('');
@@ -16,23 +16,23 @@ const BusRims = () => {
   const { addItem } = useCart();
 
   const availableBrands = [
-    'Enkei',
-    'BBS',
-    'OZ Racing',
-    'Konig',
-    'HRE',
-    'Vossen',
-    'Advan'
+    'Exide',
+    'Amaron',
+    'Bosch',
+    'Optima',
+    'Interstate',
+    'Duracell',
+    'Yuasa'
   ];
 
-  const availableColours = ['silver', 'black', 'gold'];
+  const availableColours = ['black', 'white', 'blue'];
 
   const fetchRims = async () => {
     setLoading(true);
 
     const params = new URLSearchParams({
-      category: 'rim',
-      vehicle_type: 'bus',
+      category: 'battery',
+      vehicle_type: 'sedan',
       ...(brand && { brand }),
       ...(colour && { colour }),
       ...(price && { price }),
@@ -104,15 +104,15 @@ const BusRims = () => {
         {/* Price */}
         <select value={price} onChange={e => setPrice(e.target.value)}>
           <option value="">All Prices</option>
-          <option value="low">Low (&lt; 25k)</option>
-          <option value="medium">Medium (25k–30k)</option>
+          <option value="low">Low (&lt; 20k)</option>
+          <option value="medium">Medium (20k–30k)</option>
           <option value="high">High (&gt; 30k)</option>
         </select>
       </div>
 
       <div className="products-grid">
         {loading ? (
-          <p>Loading bus rims...</p>
+          <p>Loading sedan batteries...</p>
         ) : items.length ? (
           items.map(item => (
              <div key={item.id} className="item-card">
@@ -137,7 +137,7 @@ const BusRims = () => {
             </div>
           ))
         ) : (
-          <p>No bus rims found.</p>
+          <p>No sedan batteries found.</p>
         )}
       </div>
 
@@ -176,4 +176,4 @@ const BusRims = () => {
   );
 };
 
-export default BusRims;
+export default SedanBatteries;
