@@ -40,8 +40,8 @@ p{
 }
 
 .cart-item-image {
-  width: 80%;
-  height: 50%;
+  width: 40%;
+  height: 30%;
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2); 

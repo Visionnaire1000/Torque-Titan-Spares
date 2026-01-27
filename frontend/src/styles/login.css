@@ -35,18 +35,27 @@ html, body {
 }
 
 .login-container {
-  max-width: 400px;
+  max-width: 420px;
   width: 100%;
   margin: 120px auto 0 auto;
   padding: 2rem;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 140px;
 }
 
 .registers{
-  color: #2a9d8f;
+  color: rgb(0, 64, 128);
   font-size: medium;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.sign{
+  color: rgb(0, 64, 128);
+  font-size: medium;
+  text-align: center;
   margin-bottom: 10px;
   font-weight: 700;
 }
@@ -58,7 +67,8 @@ html, body {
 
 .login-card-header h2 {
   font-size: 1.8rem;
-  color: #2a9d8f;
+  color: rgb(0, 64, 128);
+  text-align: center;
 }
 
 .login-card-header p {
@@ -97,6 +107,7 @@ html, body {
   outline: none;
 }
 
+
 .submit-button {
   padding: 0.75rem;
   background-color: rgb(0, 64, 128);
@@ -114,7 +125,7 @@ html, body {
 }
 
 .submit-button:disabled {
-  background-color: #a5d6a7;
+  background-color: #ccc;
   cursor: not-allowed;
 }
 

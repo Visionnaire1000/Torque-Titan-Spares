@@ -18,3 +18,4 @@ const RoleProtectedRoutes = ({ allowedRoles, children }) => {
 };
 
 export default RoleProtectedRoutes;
+

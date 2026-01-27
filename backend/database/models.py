@@ -75,8 +75,8 @@ class SpareParts(db.Model, SerializerMixin):
 
     # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    '-order_items.sparepart',   
-    '-reviews.spareparts',      
+    "-order_items.sparepart.order_items",  # stop circular serialization(infinite recursion)
+    "-reviews.spareparts",      
     )
 
     #--------------------------VALIDATIONS-----------------------------------
@@ -209,8 +209,11 @@ class Orders(db.Model, SerializerMixin):
     )
 
     # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ("-users.orders", "-order_items.order")
-
+    serialize_rules = (
+    "-users.orders",          # keep from going back to user -> orders
+    "-order_items.order",     # stop going from order -> items -> order
+    "-order_items.sparepart.order_items",  # stop sparepart -> order_items -> order -> ...
+    )
 
     #-------------------------CUSTOM METHOD---------------------------------
         #(calculates total-price of order items)
@@ -234,7 +237,10 @@ class OrderItems(db.Model, SerializerMixin):
     sparepart = db.relationship("SpareParts", back_populates="order_items")
 
     # ------------------------- SERIALIZE RULES -------------------------------
-    serialize_rules = ("-order.order_items", "-sparepart.order_items")
+    serialize_rules = (
+    "-order.order_items",  
+    "-sparepart.order_items",  
+    )
 
     #-------------------------CUSTOM METHOD---------------------------------
        #(calculates total price of order items)

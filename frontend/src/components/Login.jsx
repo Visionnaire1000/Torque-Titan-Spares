@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
 import '../styles/login.css';
 
 const Login = () => {
@@ -10,6 +11,9 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+
+  const [showPassword, setShowPassword] = useState(false);
+ 
   // Path user attempted before login
   const from = location.state?.from || '/';
 
@@ -32,7 +36,7 @@ const Login = () => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <p className="registers">Sign in to your account</p>
+        <p className="sign">Sign in to your account</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-container">
@@ -47,7 +51,7 @@ const Login = () => {
 
           <div className="input-container">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -55,11 +59,26 @@ const Login = () => {
             />
           </div>
 
+          <button
+              type="button"
+              className="toggle-btn"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={
+                showPassword ? 'Hide password' : 'Show password'
+              }
+            >
+              {showPassword ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
+              )}
+            </button>
+
           <button type="submit" className="submit-button" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
+          
         </form>
-
         <div className="register-link">
           <p className="registers">
             Don't have an account?{' '}

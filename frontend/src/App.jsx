@@ -17,6 +17,7 @@ import Footer from "./components/Footer";
 //pages
 import Register from "./components/Register";
 import Login from "./components/Login";
+import BuyerAccount from "./components/buyerAccount/BuyerAccount";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
 import ItemDetails from "./components/ItemDetails";
@@ -55,6 +56,14 @@ function App() {
               <Route path="/register" element={<Register />} /> 
               <Route path="/login" element={<Login />} /> 
               <Route path="/" element={<Homepage />} />  
+              <Route 
+                  path="/buyer-account" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <BuyerAccount />
+                    </RoleProtectedRoutes>
+                  } 
+              />
               <Route 
                   path="/cart" 
                   element={
