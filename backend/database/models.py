@@ -210,10 +210,11 @@ class Orders(db.Model, SerializerMixin):
 
     # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    "-users.orders",          # keep from going back to user -> orders
-    "-order_items.order",     # stop going from order -> items -> order
-    "-order_items.sparepart.order_items",  # stop sparepart -> order_items -> order -> ...
-    )
+    "-users",                         # never serialize user object
+    "-order_items.order",             # stop order -> items -> order loop
+    "-order_items.sparepart.order_items",  # stop sparepart -> order_items loop
+    "-order_items.sparepart.reviews",      # optional: avoid heavy payloads
+  )
 
     #-------------------------CUSTOM METHOD---------------------------------
         #(calculates total-price of order items)

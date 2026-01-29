@@ -8,8 +8,32 @@ const BuyerOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("pending"); 
-  const [expandedOrderId, setExpandedOrderId] = useState(null); // Track expanded order
+  const [activeTab, setActiveTab] = useState("pending");
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  // ---------------- Auto-detect user timezone ----------------
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // ---------------- UTC → user timezone formatter ----------------
+  const formatOrderTime = (dateString) => {
+    if (!dateString) return "";
+
+    // Force UTC if backend omitted "Z"
+    const utcDate = dateString.endsWith("Z")
+      ? new Date(dateString)
+      : new Date(`${dateString}Z`);
+
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone,
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(utcDate);
+  };
 
   // ---------------- Fetch orders ----------------
   const fetchOrders = async () => {
@@ -59,7 +83,7 @@ const BuyerOrders = () => {
   if (error) return <p>Error: {error}</p>;
   if (!orders.length) return <p>You have no orders yet.</p>;
 
-  // ---------------- Group orders by status ----------------
+  // ---------------- Group & sort orders ----------------
   const groupedOrders = orders.reduce((acc, order) => {
     const status = order.status.toLowerCase();
     if (!acc[status]) acc[status] = [];
@@ -69,11 +93,12 @@ const BuyerOrders = () => {
 
   for (let status in groupedOrders) {
     groupedOrders[status].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      (a, b) =>
+        new Date(`${b.created_at}Z`) - new Date(`${a.created_at}Z`)
     );
   }
 
-  const tabs = ["pending", "cancelled"]; 
+  const tabs = ["pending", "cancelled"];
 
   return (
     <div className="orders-container">
@@ -95,15 +120,17 @@ const BuyerOrders = () => {
         {groupedOrders[activeTab]?.length ? (
           groupedOrders[activeTab].map((order) => (
             <div key={order.id} className="order-card">
-              {/* ---------------- Order Header ---------------- */}
-              <div 
+              <div
                 className="order-header"
                 onClick={() =>
-                  setExpandedOrderId(expandedOrderId === order.id ? null : order.id)
+                  setExpandedOrderId(
+                    expandedOrderId === order.id ? null : order.id
+                  )
                 }
                 style={{ cursor: "pointer" }}
               >
-                <strong>Order #{order.id}</strong> - {order.status.toUpperCase()}
+                <strong>Order #{order.id}</strong> —{" "}
+                {order.status.toUpperCase()}
                 <span style={{ float: "right" }}>
                   {expandedOrderId === order.id ? "▲" : "▼"}
                 </span>
@@ -112,7 +139,12 @@ const BuyerOrders = () => {
               <div>Total Items: {order.total_items}</div>
               <div>Paid: {order.paid ? "Yes" : "No"}</div>
               <div>Shipping Address: {order.address}</div>
-              <div>Created At: {new Date(order.created_at).toLocaleString()}</div>
+              <div>
+                Created At: {formatOrderTime(order.created_at)}
+                <small style={{ marginLeft: 6, opacity: 0.7 }}>
+                  ({timeZone})
+                </small>
+              </div>
 
               {order.status === "pending" && (
                 <button
@@ -123,26 +155,28 @@ const BuyerOrders = () => {
                 </button>
               )}
 
-              {/* ---------------- Expanded Order Items ---------------- */}
-              {expandedOrderId === order.id && order.order_items?.length > 0 && (
-                <div className="order-items">
-                  {order.order_items.map((item) => (
-                    <div key={item.id} className="order-item-card">
-                      <img
-                        src={item.sparepart.image_url || "/placeholder.png"}
-                        alt={item.sparepart.name}
-                        className="order-item-img"
-                      />
-                      <div className="order-item-info">
-                        <strong>{item.sparepart.name}</strong>
-                        <p>Quantity: {item.quantity}</p>
-                        <p>Price: ${item.price.toFixed(2)}</p>
-                        {item.sparepart.brand && <p>Brand: {item.sparepart.brand}</p>}
+              {expandedOrderId === order.id &&
+                order.order_items?.length > 0 && (
+                  <div className="order-items">
+                    {order.order_items.map((item) => (
+                      <div key={item.id} className="order-item-card">
+                        <img
+                          src={item.sparepart.image_url || "/placeholder.png"}
+                          alt={item.sparepart.name}
+                          className="order-item-img"
+                        />
+                        <div className="order-item-info">
+                          <strong>{item.sparepart.name}</strong>
+                          <p>Quantity: {item.quantity}</p>
+                          <p>Price: ${item.price.toFixed(2)}</p>
+                          {item.sparepart.brand && (
+                            <p>Brand: {item.sparepart.brand}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
             </div>
           ))
         ) : (
