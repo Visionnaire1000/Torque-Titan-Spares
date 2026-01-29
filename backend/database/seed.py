@@ -1,18 +1,31 @@
 import os
 from app import create_app
-from database.models import Users, SpareParts 
+from database.models import Users, SpareParts , Orders , OrderItems , Reviews , ReviewReactions 
 from core.extensions import db
 
 app = create_app()
+
+def clear_all_data():
+    """Delete all data from all tables in the correct order to avoid FK constraints."""
+    with app.app_context():
+        print("Clearing all tables...")
+
+        # Delete dependent tables first
+        OrderItems.query.delete()
+        Orders.query.delete()
+        ReviewReactions.query.delete()
+        Reviews.query.delete()
+        SpareParts.query.delete()
+        Users.query.delete()
+
+        db.session.commit()
+        print("✅ All existing data cleared")
+
 
 def seed_super_admin():
     with app.app_context():
         email = os.getenv("SUPERADMIN_EMAIL")
         password = os.getenv("SUPERADMIN_PASSWORD")
-
-        # ---------------- Delete existing super admin(s) ----------------
-        Users.query.filter_by(role="super_admin").delete()
-        db.session.commit()
 
         # (Create super admin with hashed password)
         super_admin = Users(
@@ -29,10 +42,6 @@ def seed_super_admin():
 # ----------------------------------SPARE PARTS SEEDING----------------------------------------------------
 def seed_spareparts():
     with app.app_context():
-
-        # (Delete all existing spareparts first)
-        SpareParts.query.delete()
-        db.session.commit()
 
         spareparts_data = [
             # ---------- SEDAN TYRES (12) ----------
@@ -272,6 +281,7 @@ def seed_spareparts():
 #-----------------------------------RUN SEEDERS-------------------------------------------------------------
 if __name__ == "__main__":
     with app.app_context():
+        clear_all_data()
         seed_super_admin()
         seed_spareparts()
         print("✅ Database seeding completed successfully.")

@@ -8,7 +8,7 @@ import "../styles/stripeCheckout.css";
 
 const StripeCheckout = () => {
   const { items } = useCart();
-  const { authFetch, user } = useAuth(); 
+  const { authFetch, user } = useAuth(); // Get user for localStorage key
   const [loading, setLoading] = useState(false);
 
   const [address, setAddress] = useState({
@@ -69,7 +69,7 @@ const StripeCheckout = () => {
         return;
       }
 
-      // Save latest checkout address to localStorage
+      // Optional: Save latest checkout address to localStorage
       if (user) {
         localStorage.setItem(`address_${user.id}`, JSON.stringify(address));
       }
