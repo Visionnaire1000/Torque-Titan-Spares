@@ -1,17 +1,16 @@
 import os
 from app import create_app
-from database.models import Users, SpareParts
+from database.models import Users, SpareParts 
 from core.extensions import db
 
 app = create_app()
 
-#----------------------------------------------SUPER ADMIN SEEDING----------------------------------------------------
 def seed_super_admin():
     with app.app_context():
         email = os.getenv("SUPERADMIN_EMAIL")
         password = os.getenv("SUPERADMIN_PASSWORD")
 
-        # (Delete existing super admin(s))
+        # ---------------- Delete existing super admin(s) ----------------
         Users.query.filter_by(role="super_admin").delete()
         db.session.commit()
 

@@ -430,26 +430,43 @@ class ReviewReactionsResource(Resource):
 class OrdersResource(Resource):
     @jwt_required()
     def get(self):
-        """Get summary of orders for the logged-in user."""
+        """Get all orders for the logged-in user including items and sparepart info."""
         current_user = Users.query.get(get_jwt_identity())
         orders = Orders.query.filter_by(user_id=current_user.id).all()
 
-        summary = []
+        result = []
         for order in orders:
-            summary.append({
+            order_data = {
                 "id": order.id,
                 "status": order.status,
                 "paid": order.paid,
                 "total_items": sum(item.quantity for item in order.order_items),
-                "address": f"{order.street}, {order.city}, {order.country}",
-                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None
-            })
+                "address": f"{order.street}, {order.city}, {order.country}, {order.postal_code}",
+                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                "order_items": []
+            }
 
-        return {"orders": summary}, 200
+            for item in order.order_items:
+                sparepart = item.sparepart
+                order_data["order_items"].append({
+                    "id": item.id,
+                    "quantity": item.quantity,
+                    "price": item.subtotal,  # or unit_price
+                    "sparepart": {
+                        "id": sparepart.id,
+                        "name": sparepart.category,  # or sparepart.name
+                        "brand": sparepart.brand,
+                        "image_url": sparepart.image_url
+                    }
+                })
+
+            result.append(order_data)
+
+        return {"orders": result}, 200
 
     @jwt_required()
     def patch(self, order_id):
-        """Update an order's status (e.g., cancel by setting status='cancelled')."""
+        """Update an order's status (cancel pending orders)."""
         current_user = Users.query.get(get_jwt_identity())
         order = Orders.query.get_or_404(order_id)
 
@@ -462,7 +479,6 @@ class OrdersResource(Resource):
         if not new_status:
             return {"error": "Missing status field"}, 400
 
-        # Only allow pending -> cancelled
         if order.status != "pending":
             return {"error": f"Order cannot be updated (current status: {order.status})"}, 400
         if new_status not in ["cancelled"]:
@@ -471,8 +487,8 @@ class OrdersResource(Resource):
         order.status = new_status
         db.session.commit()
         return {"message": f"Order {order_id} status updated to {new_status}"}, 200
-    
 
+    
 class AdminOrders(Resource):
     #View all orders (admin only).
     @jwt_required()
