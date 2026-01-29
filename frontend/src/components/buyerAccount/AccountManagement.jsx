@@ -1,65 +1,126 @@
-const AccountManagement = () => {
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import '../../styles/accountManagement.css';
 
-  const handleChangePassword = async (e) => {
+const AccountManagement = () => {
+  const { changePassword, deleteAccount, isLoading } = useAuth();
+
+  // ------------------ Change password state ------------------
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  // ------------------ Delete account state ------------------
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+
+  // ------------------ Handlers ------------------
+  const handleChangePassword = (e) => {
     e.preventDefault();
 
-    await fetch(`${config.API_BASE_URL}/change-password`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${JSON.parse(localStorage.getItem("titanUser"))?.token}`
-      },
-      body: JSON.stringify({ oldPassword, newPassword })
-    });
+    if (newPassword !== confirmNewPassword) {
+      alert('New passwords do not match');
+      return;
+    }
 
-    alert("Password updated");
+    changePassword(currentPassword, newPassword);
+
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("This action is permanent. Continue?")) return;
+  const handleDeleteAccount = () => {
+    if (!deletePassword) {
+      alert('Please enter your password to confirm');
+      return;
+    }
 
-    await fetch(`${config.API_BASE_URL}/delete-account`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${JSON.parse(localStorage.getItem("titanUser"))?.token}`
-      }
-    });
-
-    localStorage.removeItem("farmartUser");
-    window.location.href = "/register";
+    deleteAccount(deletePassword);
   };
 
   return (
-    <div>
+    <div className="account-management">
       <h2>Account Management</h2>
 
-      <form onSubmit={handleChangePassword} className="account-form">
-        <h4><Lock size={16} /> Change Password</h4>
-        <input
-          type="password"
-          placeholder="Old password"
-          value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="New password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Update Password</button>
-      </form>
+      {/* ================= Change Password ================= */}
+      <section>
+        <h3>Change Password</h3>
 
-      <div className="danger-zone">
-        <h4><Trash2 size={16} /> Danger Zone</h4>
-        <button onClick={handleDeleteAccount} className="danger-btn">
-          Delete My Account
-        </button>
-      </div>
+        <form onSubmit={handleChangePassword}>
+          <input
+            type="password"
+            placeholder="Current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit" disabled={isLoading}>
+            Change Password
+          </button>
+        </form>
+      </section>
+
+      {/* ================= Delete Account ================= */}
+      <section className="danger-zone">
+        <h3>Danger Zone</h3>
+
+        {!showDeleteConfirm ? (
+          <button
+            className="danger"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Delete Account
+          </button>
+        ) : (
+          <div className="delete-confirm">
+            <p>This action is permanent. Enter your password to continue.</p>
+
+            <input
+              type="password"
+              placeholder="Confirm password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+            />
+
+            <div className="actions">
+              <button
+                className="danger"
+                onClick={handleDeleteAccount}
+                disabled={isLoading}
+              >
+                Confirm Delete
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletePassword('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

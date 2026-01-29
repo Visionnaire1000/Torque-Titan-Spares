@@ -17,11 +17,9 @@ export const AuthProvider = ({ children }) => {
       if (stored) {
         const parsed = JSON.parse(stored);
 
-        // Validate role (ONLY admin or buyer allowed)
         if (parsed.role === 'admin' || parsed.role === 'buyer') {
           setUser(parsed);
         } else {
-          console.warn('Invalid role found in storage. Resetting.');
           localStorage.removeItem('titanUser');
         }
       }
@@ -37,8 +35,7 @@ export const AuthProvider = ({ children }) => {
   const isTokenExpired = (token) => {
     try {
       const decoded = jwtDecode(token);
-      if (!decoded.exp) return true;
-      return decoded.exp < Date.now() / 1000;
+      return !decoded.exp || decoded.exp < Date.now() / 1000;
     } catch {
       return true;
     }
@@ -48,7 +45,6 @@ export const AuthProvider = ({ children }) => {
   const authFetch = async (url, options = {}) => {
     let tokenToUse = user?.token;
 
-    // Refresh if expired
     if (user?.token && isTokenExpired(user.token) && user.refreshToken) {
       tokenToUse = await refreshAccessToken(user.refreshToken);
       if (!tokenToUse) throw new Error('Token refresh failed');
@@ -63,7 +59,6 @@ export const AuthProvider = ({ children }) => {
 
     const res = await fetch(url, { ...options, headers });
 
-    // Retry once on 401
     if (res.status === 401 && user?.refreshToken) {
       const newToken = await refreshAccessToken(user.refreshToken);
       if (!newToken) throw new Error('Re-authentication required');
@@ -89,12 +84,11 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.access_token) throw new Error(data.error || 'Failed to refresh token');
+      if (!res.ok || !data.access_token) throw new Error();
 
       const updatedUser = {
         ...user,
         token: data.access_token,
-        role: user.role,             // ensure role persists
       };
 
       localStorage.setItem('titanUser', JSON.stringify(updatedUser));
@@ -102,9 +96,7 @@ export const AuthProvider = ({ children }) => {
 
       scheduleTokenRefresh(data.access_token, refreshToken);
       return data.access_token;
-
     } catch (err) {
-      console.error('[AuthProvider] refresh failed:', err);
       logout(false);
       toast.error('Session expired. Please log in again.');
       return null;
@@ -117,10 +109,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const decoded = jwtDecode(accessToken);
-      if (!decoded.exp) return;
-
-      const expiresAt = decoded.exp * 1000;
-      const refreshTime = expiresAt - Date.now() - 2 * 60 * 1000; // refresh 2 minutes early
+      const refreshTime = decoded.exp * 1000 - Date.now() - 2 * 60 * 1000;
 
       if (refreshTime > 0) {
         refreshTimer.current = setTimeout(() => {
@@ -144,28 +133,22 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.access_token) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.error || 'Login failed');
 
       const decoded = jwtDecode(data.access_token);
 
       const userInfo = {
         id: decoded.sub,
         email,
-        role: data.role,           
+        role: data.role,
         token: data.access_token,
         refreshToken: data.refresh_token,
       };
-
-      // Validate role
-      if (userInfo.role !== 'admin' && userInfo.role !== 'buyer') {
-        throw new Error('Invalid role assigned by server');
-      }
 
       localStorage.setItem('titanUser', JSON.stringify(userInfo));
       setUser(userInfo);
 
       scheduleTokenRefresh(data.access_token, data.refresh_token);
-
       toast.success('Logged in successfully');
     } catch (err) {
       toast.error(err.message || 'Login failed');
@@ -196,15 +179,59 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ------------------ Change password ------------------
+  const changePassword = async (currentPassword, newPassword) => {
+  setIsLoading(true);
+
+  try {
+    const res = await authFetch(`${config.API_BASE_URL}/change-password`, {
+      method: 'POST',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to change password');
+
+    toast.success('Password changed. Please log in again.');
+    logout(false); // 🔥 force logout
+  } catch (err) {
+    toast.error(err.message || 'Password change failed');
+  } finally {
+    setIsLoading(false);
+  }
+ };
+
+  // ------------------ Delete account ------------------
+  const deleteAccount = async (password) => {
+  setIsLoading(true);
+
+  try {
+    const res = await authFetch(`${config.API_BASE_URL}/delete-account`, {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete account');
+
+    toast.success('Account deleted');
+    logout(false);
+  } catch (err) {
+    toast.error(err.message || 'Account deletion failed');
+  } finally {
+    setIsLoading(false);
+  }
+ };
+
+
   // ------------------ Logout ------------------
   const logout = (showToast = true) => {
     localStorage.removeItem('titanUser');
     setUser(null);
-
-    if (refreshTimer.current) {
-      clearTimeout(refreshTimer.current);
-    }
-
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
     if (showToast) toast.success('Logged out successfully');
   };
 
@@ -213,10 +240,7 @@ export const AuthProvider = ({ children }) => {
     if (user?.token && user.refreshToken) {
       scheduleTokenRefresh(user.token, user.refreshToken);
     }
-
-    return () => {
-      if (refreshTimer.current) clearTimeout(refreshTimer.current);
-    };
+    return () => refreshTimer.current && clearTimeout(refreshTimer.current);
   }, [user]);
 
   return (
@@ -227,6 +251,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        changePassword,
+        deleteAccount,
         authFetch,
         isAuthenticated: !!user,
       }}
@@ -241,3 +267,6 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 };
+
+
+

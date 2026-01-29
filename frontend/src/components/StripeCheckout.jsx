@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
@@ -8,7 +8,7 @@ import "../styles/stripeCheckout.css";
 
 const StripeCheckout = () => {
   const { items } = useCart();
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth(); 
   const [loading, setLoading] = useState(false);
 
   const [address, setAddress] = useState({
@@ -17,6 +17,15 @@ const StripeCheckout = () => {
     postal_code: "",
     country: "",
   });
+
+  // Auto-fill from saved address if exists
+  useEffect(() => {
+    if (!user) return;
+    const savedAddress = localStorage.getItem(`address_${user.id}`);
+    if (savedAddress) {
+      setAddress(JSON.parse(savedAddress));
+    }
+  }, [user]);
 
   const handleAddressChange = (e) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
@@ -60,7 +69,12 @@ const StripeCheckout = () => {
         return;
       }
 
-      // Redirect to Stripe checkout 
+      // Save latest checkout address to localStorage
+      if (user) {
+        localStorage.setItem(`address_${user.id}`, JSON.stringify(address));
+      }
+
+      // Redirect to Stripe checkout
       window.location.href = data.checkout_url;
 
     } catch (err) {
@@ -75,10 +89,37 @@ const StripeCheckout = () => {
     <div className="checkout-container">
       <form onSubmit={handleSubmit}>
         <h2>Shipping Address</h2>
-        <input type="text" name="street" placeholder="Street" value={address.street} onChange={handleAddressChange} required />
-        <input type="text" name="city" placeholder="City" value={address.city} onChange={handleAddressChange} required />
-        <input type="text" name="postal_code" placeholder="Postal Code" value={address.postal_code} onChange={handleAddressChange} />
-        <input type="text" name="country" placeholder="Country" value={address.country} onChange={handleAddressChange} required />
+        <input
+          type="text"
+          name="street"
+          placeholder="Street"
+          value={address.street}
+          onChange={handleAddressChange}
+          required
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={address.city}
+          onChange={handleAddressChange}
+          required
+        />
+        <input
+          type="text"
+          name="postal_code"
+          placeholder="Postal Code"
+          value={address.postal_code}
+          onChange={handleAddressChange}
+        />
+        <input
+          type="text"
+          name="country"
+          placeholder="Country"
+          value={address.country}
+          onChange={handleAddressChange}
+          required
+        />
         <button type="submit" disabled={loading}>
           {loading ? "Redirecting..." : "Pay with Card"}
         </button>

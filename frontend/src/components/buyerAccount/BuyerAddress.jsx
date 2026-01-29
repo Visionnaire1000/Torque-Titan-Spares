@@ -1,54 +1,86 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../../styles/buyerAddress.css";
+
 const BuyerAddress = () => {
-  const [addresses, setAddresses] = useState([]);
-  const [address, setAddress] = useState("");
+  const { user } = useAuth(); 
+  const [address, setAddress] = useState({
+    street: "",
+    city: "",
+    postal_code: "",
+    country: "",
+  });
 
-  const token = JSON.parse(localStorage.getItem("titanUser"))?.token;
-
+  // Load saved address from localStorage for this user
   useEffect(() => {
-    fetch(`${config.API_BASE_URL}/addresses`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(setAddresses);
-  }, [token]);
+    if (!user) return;
+    const savedAddress = localStorage.getItem(`address_${user.id}`);
+    if (savedAddress) {
+      setAddress(JSON.parse(savedAddress));
+    }
+  }, [user]);
 
-  const addAddress = async (e) => {
+  const handleAddressChange = (e) => {
+    setAddress({ ...address, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    const res = await fetch(`${config.API_BASE_URL}/addresses`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ address })
-    });
+    if (!address.street || !address.city || !address.country) {
+      toast.error("Please fill all required address fields");
+      return;
+    }
 
-    const newAddress = await res.json();
-    setAddresses([...addresses, newAddress]);
-    setAddress("");
+    if (!user) {
+      toast.error("User not logged in");
+      return;
+    }
+
+    // Save address in localStorage keyed by user id
+    localStorage.setItem(`address_${user.id}`, JSON.stringify(address));
+    toast.success("Address saved successfully!");
   };
 
   return (
-    <div>
-      <h2>Address Book</h2>
-
-      <form onSubmit={addAddress} className="account-form">
+    <div className="checkout-container">
+      <form onSubmit={handleSubmit}>
+        <h2>Shipping Address</h2>
         <input
           type="text"
-          placeholder="Enter delivery address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          name="street"
+          placeholder="Street"
+          value={address.street}
+          onChange={handleAddressChange}
           required
         />
-        <button type="submit">Add Address</button>
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={address.city}
+          onChange={handleAddressChange}
+          required
+        />
+        <input
+          type="text"
+          name="postal_code"
+          placeholder="Postal Code"
+          value={address.postal_code}
+          onChange={handleAddressChange}
+        />
+        <input
+          type="text"
+          name="country"
+          placeholder="Country"
+          value={address.country}
+          onChange={handleAddressChange}
+          required
+        />
+        <button type="submit">Save Address</button>
       </form>
-
-      {addresses.map(addr => (
-        <div key={addr.id} className="address-card">
-          {addr.address}
-        </div>
-      ))}
     </div>
   );
 };

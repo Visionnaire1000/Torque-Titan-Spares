@@ -1,5 +1,5 @@
 from apis.resources import (
-    Register, Login, TokenRefresh, CreateAdmin,
+    Register, Login, ChangePassword , DeleteAccount ,TokenRefresh, CreateAdmin,
     SparePartsList,
     ReviewsResource, ReviewEditResource, ReviewReactionsResource,
     OrdersResource, AdminOrders
@@ -8,6 +8,8 @@ from apis.resources import (
 def register_routes(api):
     api.add_resource(Register, '/register')
     api.add_resource(Login, '/login')
+    api.add_resource(ChangePassword, '/change-password')
+    api.add_resource(DeleteAccount, '/delete-account')
     api.add_resource(TokenRefresh, '/refresh')
     api.add_resource(CreateAdmin, '/admin/create')
     api.add_resource(SparePartsList, "/spareparts", "/spareparts/<string:part_id>")

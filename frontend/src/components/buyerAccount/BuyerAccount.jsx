@@ -1,39 +1,51 @@
-import { useState } from "react";
-//import AccountManagement from "./AccountManagement";
+import { Routes, Route, NavLink } from "react-router-dom";
+import AccountManagement from "./AccountManagement"; 
 import BuyerOrders from "./BuyerOrders";
 import BuyerAddress from "./BuyerAddress";
+import { User, Package, MapPin } from "lucide-react";
 import "../../styles/buyerAccount.css";
 
-import {
-  User,
-  Package,
-  MapPin
-} from "lucide-react";
-
 const BuyerAccount = () => {
-  const [activeTab, setActiveTab] = useState("account");
-
   return (
     <div className="account-page">
       {/* Sidebar */}
       <aside className="account-sidebar">
-        <button onClick={() => setActiveTab("account")}>
-          <User size={18} /> Account Management
-        </button>
+        <NavLink
+          to="/buyer-account"
+          end // ensures exact match for the root path
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <User size={18} className="icon" /> Account Management
+        </NavLink>
 
-        <button onClick={() => setActiveTab("orders")}>
-          <Package size={18} /> My Orders
-        </button>
+        <NavLink
+          to="/buyer-account/orders"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <Package size={18} className="icon" /> My Orders
+        </NavLink>
 
-        <button onClick={() => setActiveTab("addresses")}>
-          <MapPin size={18} /> Address Book
-        </button>
+        <NavLink
+          to="/buyer-account/addresses"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <MapPin size={18} className="icon" /> Address Book
+        </NavLink>
       </aside>
 
       {/* Content */}
       <section className="account-content">
-        {activeTab === "orders" && <BuyerOrders />}
-        {activeTab === "addresses" && <BuyerAddress />}
+        <Routes>
+          <Route path="" element={<AccountManagement />} />
+          <Route path="orders" element={<BuyerOrders />} />
+          <Route path="addresses" element={<BuyerAddress />} />
+        </Routes>
       </section>
     </div>
   );

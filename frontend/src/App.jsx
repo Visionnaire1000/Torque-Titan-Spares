@@ -57,7 +57,7 @@ function App() {
               <Route path="/login" element={<Login />} /> 
               <Route path="/" element={<Homepage />} />  
               <Route 
-                  path="/buyer-account" 
+                  path="/buyer-account/*" 
                   element={
                      <RoleProtectedRoutes allowedRoles={['buyer']}>
                         <BuyerAccount />

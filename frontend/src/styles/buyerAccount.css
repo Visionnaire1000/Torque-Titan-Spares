@@ -1,84 +1,62 @@
-/* ===== Buyer Account Layout ===== */
 .account-page {
   display: flex;
   min-height: 100vh;
-  background: #f6f7fb;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Ubuntu, sans-serif;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
 }
 
-/* ===== Sidebar ===== */
+/* Sidebar */
 .account-sidebar {
-  width: 260px;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  padding: 1.5rem 1rem;
+  width: 220px;
+  background-color: #fff;
+  border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  padding: 20px 0;
+  gap: 4px;
 }
 
-.account-sidebar button {
+.account-sidebar a {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
 }
 
-.account-sidebar button:hover {
-  background: #f3f4f6;
+.account-sidebar a .icon {
+  margin-right: 10px;
 }
 
-/* Optional active state (add className="active") */
-.account-sidebar button.active {
-  background: #eef2ff;
-  color: #4338ca;
-  font-weight: 600;
+.account-sidebar a:hover {
+  background-color: #f0f0f0;
 }
 
-/* ===== Content Area ===== */
+/* Content area */
 .account-content {
   flex: 1;
-  padding: 2rem;
-  background: #f9fafb;
+  padding: 30px;
+  background-color: #f9f9f9;
 }
 
-/* Card-like inner sections (optional helper) */
-.account-content > div {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #555;
+  border-left: 4px solid transparent;
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 900px) {
-  .account-page {
-    flex-direction: column;
-  }
+.tab:hover {
+  background-color: #f5f5f5;
+}
 
-  .account-sidebar {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .account-sidebar button {
-    flex: 1;
-    justify-content: center;
-    white-space: nowrap;
-  }
-
-  .account-content {
-    padding: 1rem;
-  }
+.active-tab {
+  color: #007bff;
+  font-weight: bold;
+  border-left-color: rgb(0,64,128);
+  background-color: #e6f0ff;
 }

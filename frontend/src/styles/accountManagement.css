@@ -1,0 +1,105 @@
+.account-management {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  font-family: Arial, sans-serif;
+}
+
+.account-management h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.account-management section {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.account-management section h3 {
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+.account-management form input,
+.account-management input {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.8rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+  transition: border 0.2s;
+}
+
+.account-management form input:focus,
+.account-management input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.account-management button {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+
+.account-management button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-management form button {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.account-management form button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+/* Danger Zone */
+.danger-zone {
+  background-color: #fff0f0;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.danger-zone h3 {
+  color: #c82333;
+}
+
+.danger-zone .danger {
+  background-color: #c82333;
+  color: #fff;
+  margin-top: 0.5rem;
+}
+
+.danger-zone .danger:hover:not(:disabled) {
+  background-color: #a71d2a;
+}
+
+/* Delete confirm section */
+.delete-confirm p {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.delete-confirm .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.delete-confirm .actions button {
+  flex: 1;
+}

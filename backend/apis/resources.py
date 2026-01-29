@@ -60,7 +60,8 @@ class Login(Resource):
             }, 200
 
         return {"error": "Invalid credentials"}, 401
- 
+    
+
 class TokenRefresh(Resource):
     @jwt_required(refresh=True)
     def post(self):
@@ -72,6 +73,60 @@ class TokenRefresh(Resource):
         )
         return {"access_token": new_access_token}, 200
 
+        
+class ChangePassword(Resource):
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+
+        if not current_password or not new_password:
+            return {"error": "Current and new password are required"}, 400
+
+        user_id = get_jwt_identity()
+        user = Users.query.get(user_id)
+
+        if not user:
+            return {"error": "User not found"}, 404
+
+        if not user.check_password(current_password):
+            return {"error": "Current password is incorrect"}, 401
+
+        try:
+            user.set_password(new_password)
+            db.session.commit()
+            return {"status": "success", "message": "Password updated successfully"}, 200
+        except Exception as e:
+            db.session.rollback()
+            print("Password change error:", e)
+            return {"error": "Internal server error"}, 500\
+            
+class DeleteAccount(Resource):
+    @jwt_required()
+    def delete(self):
+        data = request.get_json()
+        password = data.get('password')
+
+        if not password:
+            return {"error": "Password confirmation required"}, 400
+
+        user_id = get_jwt_identity()
+        user = Users.query.get(user_id)
+
+        if not user or not user.check_password(password):
+            return {"error": "Invalid password"}, 401
+
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return {"status": "success", "message": "Account deleted"}, 200
+        except Exception as e:
+            db.session.rollback()
+            print("Delete error:", e)
+            return {"error": "Internal server error"}, 500
+
+
 class CreateAdmin(Resource):
     @jwt_required()
     def post(self):
@@ -80,18 +135,17 @@ class CreateAdmin(Resource):
             return {"error": "Only admins can create other admins"}, 403
 
         data = request.get_json()
-        email, password, name = data.get('email'), data.get('password'), data.get('name')
+        email, password = data.get('email'), data.get('password')
         if Users.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 409
 
-        admin_user = Users(email=email, role='admin', name=name)
+        admin_user = Users(email=email, role='admin')
         admin_user.set_password(password)
         db.session.add(admin_user)
         db.session.commit()
         return {"message": "Admin account created"}, 201
 
 # ------------------ Spare Parts ------------------
-
 class SparePartsList(Resource):
     @jwt_required(optional=True)
     def get(self, part_id=None):
