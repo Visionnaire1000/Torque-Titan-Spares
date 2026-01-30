@@ -63,7 +63,7 @@ function App() {
                         <BuyerAccount />
                     </RoleProtectedRoutes>
                   } 
-              />
+              />         
               <Route 
                   path="/cart" 
                   element={

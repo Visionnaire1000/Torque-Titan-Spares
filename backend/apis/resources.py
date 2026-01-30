@@ -3,8 +3,10 @@ from flask import request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from datetime import timedelta
 from sqlalchemy import desc, asc, func
+from sqlalchemy.orm import joinedload
+import uuid
 from core.extensions import db
-from database.models import Users, SpareParts, Orders, Reviews, ReviewReactions
+from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
 
 # ------------------ Auth ------------------
 class Register(Resource):
@@ -430,20 +432,39 @@ class ReviewReactionsResource(Resource):
 class OrdersResource(Resource):
     @jwt_required()
     def get(self):
-        """Get summary of orders for the logged-in user."""
+        """Get summary of orders for the logged-in user, including order items."""
         current_user = Users.query.get(get_jwt_identity())
         orders = Orders.query.filter_by(user_id=current_user.id).all()
 
         summary = []
         for order in orders:
-            summary.append({
+            order_data = {
                 "id": order.id,
                 "status": order.status,
                 "paid": order.paid,
                 "total_items": sum(item.quantity for item in order.order_items),
+                "total_price": order.total_price,
                 "address": f"{order.street}, {order.city}, {order.country}",
-                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None
-            })
+                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                
+                # Include order items
+                "order_items": [
+                    {
+                        "id": item.id,
+                        "quantity": item.quantity,
+                        "price": float(item.unit_price),
+                        "sparepart": {
+                            "id": item.sparepart.id,
+                            "brand": item.sparepart.brand,
+                            "category": item.sparepart.category,
+                            "vehicle_type": item.sparepart.vehicle_type,
+                            "image_url": item.sparepart.image
+                        }
+                    }
+                    for item in order.order_items
+                ]
+            }
+            summary.append(order_data)
 
         return {"orders": summary}, 200
 
@@ -471,8 +492,8 @@ class OrdersResource(Resource):
         order.status = new_status
         db.session.commit()
         return {"message": f"Order {order_id} status updated to {new_status}"}, 200
-    
-
+ 
+ 
 class AdminOrders(Resource):
     #View all orders (admin only).
     @jwt_required()

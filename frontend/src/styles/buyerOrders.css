@@ -1,99 +1,117 @@
+/* ---------------- Container ---------------- */
 .orders-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* ---------------- Tabs ---------------- */
+.orders-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 32px;
-  margin-top: 80px;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 20px;
 }
 
-.orders-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: color 0.3s, border-bottom 0.3s;
+  border-bottom: 3px solid transparent;
 }
 
-.group-title {
-  font-size: 18px;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  color: #333;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 4px;
+.tab-btn:hover {
+  color: rgb(0,64,128);
 }
 
-/* Order Card */
+.tab-btn.active {
+  color: rgb(0,64,128);
+  border-bottom: 3px solid rgb(0,64,128);
+}
+
+/* ---------------- Order Cards ---------------- */
 .order-card {
-  padding: 16px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #fafafa;
+  transition: box-shadow 0.3s;
+}
+
+.order-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .order-header {
-  font-weight: bold;
-  margin-bottom: 8px;
+  font-size: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
 }
 
-/* Cancel Button */
+.toggle-icon {
+  font-weight: bold;
+}
+
+/* ---------------- Order Items ---------------- */
+.order-items {
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.order-item-card {
+  display: flex;
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #ddd;
+}
+
+.order-item-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 4px;
+}
+
+.order-item-info {
+  flex: 1;
+}
+
+/* ---------------- Buttons ---------------- */
 .cancel-btn {
   margin-top: 10px;
   padding: 6px 12px;
-  background-color: #ff4d4f;
-  color: #fff;
+  background-color: #dc3545;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background 0.3s;
 }
 
 .cancel-btn:hover {
-  background-color: #e53935;
+  background-color: #c82333;
 }
 
-/* Optional: color code groups */
-.orders-group.pending .group-title {
-  color: #d97706; /* orange */
-}
-.orders-group.cancelled .group-title {
-  color: #ef4444; /* red */
-}
-.orders-group.shipped .group-title {
-  color: #3b82f6; /* blue */
-}
-.orders-group.delivered .group-title {
-  color: #10b981; /* green */
+/* ---------------- Labels ---------------- */
+.timezone-label {
+  margin-left: 6px;
+  opacity: 0.7;
+  font-size: 12px;
 }
 
-/* Tabs container */
-.orders-tabs {
-  display: flex;
-  gap: 60px;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0; /* light grey underline for all tabs */
+.toggle-icon{
+    cursor: pointer;
 }
 
-/* Individual tab buttons */
-.tab-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.2s;
-  color: #555; /* inactive tab color */
-}
-
-/* Active tab */
-.tab-btn.active {
-  color: rgb(0,64,128); /* blue text for active tab */
-}
-
-.tab-btn.active::after {
-  content: "";
-  position: absolute;
-  bottom: -2px; /* align with border */
-  left: 0;
-  width: 100%;
-  height: 3px; /* thickness of the bottom border highlight */
-  background-color: rgb(0,64,128); /* highlight color */
-  border-radius: 2px 2px 0 0;
+.item-card-link {
+  text-decoration: none;
 }
