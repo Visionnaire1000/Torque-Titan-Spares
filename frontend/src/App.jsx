@@ -17,7 +17,9 @@ import Footer from "./components/Footer";
 //pages
 import Register from "./components/Register";
 import Login from "./components/Login";
-import BuyerAccount from "./components/buyerAccount/BuyerAccount";
+import AccountManagement from "./components/buyerDashboard/AccountManagement"; 
+import BuyerOrders from "./components/buyerDashboard/BuyerOrders";
+import BuyerAddress from "./components/buyerDashboard/BuyerAddress";
 import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
 import ItemDetails from "./components/ItemDetails";
@@ -55,15 +57,31 @@ function App() {
             <Routes>
               <Route path="/register" element={<Register />} /> 
               <Route path="/login" element={<Login />} /> 
-              <Route path="/" element={<Homepage />} />  
+              <Route path="/" element={<Homepage />} />   
               <Route 
-                  path="/buyer-account/*" 
+                  path="/account-management" 
                   element={
                      <RoleProtectedRoutes allowedRoles={['buyer']}>
-                        <BuyerAccount />
+                        <AccountManagement />
                     </RoleProtectedRoutes>
                   } 
-              />         
+              />
+              <Route 
+                  path="/orders" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <BuyerOrders />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/address" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                        <BuyerAddress />
+                    </RoleProtectedRoutes>
+                  } 
+              />
               <Route 
                   path="/cart" 
                   element={

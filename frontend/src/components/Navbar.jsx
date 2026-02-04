@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink ,useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Home, User } from "lucide-react";
+import { Home, User, Package, MapPin } from "lucide-react";
 import '../styles/navbar.css';
 
 const Navbar = () => {
@@ -27,19 +27,44 @@ const Navbar = () => {
       {/* Dashboard dropdown */}
       <div className="dashboard-dropdown">
         <button className="dashboard-button" onClick={() => setShowDropdown(!showDropdown)} title="Dashboard">
-          <Menu />
+            <Menu />
         </button>
         {showDropdown && (
-          <div className="dropdown-menu">
-            <Link to="/" className="dropdown-item">
-               <Home size={18} />
-               <span>Home</span>
-            </Link>
+        <div className="dropdown-menu">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+           <Home size={18} /> Home
+        </NavLink>
+        <NavLink
+          to="/account-management"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <User size={18} className="icon" /> Account Management
+        </NavLink>
 
-            <Link to="/buyer-account" className="dropdown-item">
-              <User size={18} />
-              <span>My Account</span>
-          </Link>
+        <NavLink
+          to="/orders"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <Package size={18} className="icon" /> My Orders
+        </NavLink>
+
+        <NavLink
+          to="/address"
+          className={({ isActive }) =>
+            isActive ? "tab active-tab" : "tab"
+          }
+        >
+          <MapPin size={18} className="icon" /> Address Book
+        </NavLink>
              {user && <button onClick={() => { logout(); navigate('/login'); }}>Logout</button>}
           </div>
         )}
@@ -94,118 +119,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
-
-/*
-import { useState, useEffect } from 'react';
-import { Link ,useNavigate, useLocation} from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import '../styles/login.css';
-
-
-const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const { login, isLoading, user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError('');
-  };
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-
-  // Path user attempted before login
-  const from = location.state?.from || '/';
-
-  
-  const handleSubmit = async (e) => {
-     e.preventDefault();
-     await login(email, password); 
-   };
- 
-   // Redirect after login based on role
-   useEffect(() => {
-     if (!isAuthenticated || !user) return;
- 
-     if (user.role === 'admin') {
-       navigate('/admin', { replace: true });
-     } else {
-       navigate(from, { replace: true });
-     }
-   }, [isAuthenticated, user, navigate, from]);
- 
-  return (
-    <div className="login-container">
-      <div className="login-card">
-        <p className="sign">Sign in to your account</p>
-        <form className="login-form" onSubmit={handleSubmit}>
-        <div className="input-container">
-
-          <input
-            type="email"
-            name="email"
-            placeholder="Email address"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              aria-describedby={error ? 'login-error' : undefined}
-            />
-
-            <button
-              type="button"
-              className="toggle-btn"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={
-                showPassword ? 'Hide password' : 'Show password'
-              }
-            >
-              {showPassword ? (
-                <EyeOff size={20} />
-              ) : (
-                <Eye size={20} />
-              )}
-            </button>
-          </div>
-
-          {error && (
-            <p id="login-error" className="login-error">
-              {error}
-            </p>
-          )}
-
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-          
-        <div className="register-link">
-           <p className="registers">
-            Don't have an account?{' '}
-             <Link to="/register" className="link">Register here</Link>
-          </p>
-        </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default Login;  */
-
-

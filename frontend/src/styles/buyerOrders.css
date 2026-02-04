@@ -1,7 +1,8 @@
 /* ---------------- Container ---------------- */
 .orders-container {
+  margin-top: 100px;
+  margin-left: 140px;
   max-width: 900px;
-  margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
 }
@@ -114,4 +115,10 @@
 
 .item-card-link {
   text-decoration: none;
+}
+
+.message{
+  margin-bottom: 400px;
+  font-size: medium;
+  font-weight: 600;
 }

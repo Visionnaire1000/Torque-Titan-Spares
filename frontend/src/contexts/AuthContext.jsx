@@ -8,6 +8,9 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+
   const refreshTimer = useRef(null);
 
   // ------------------ Load saved user ------------------
@@ -181,7 +184,7 @@ export const AuthProvider = ({ children }) => {
 
   // ------------------ Change password ------------------
   const changePassword = async (currentPassword, newPassword) => {
-  setIsLoading(true);
+   setChangePasswordLoading(true);
 
   try {
     const res = await authFetch(`${config.API_BASE_URL}/change-password`, {
@@ -196,17 +199,17 @@ export const AuthProvider = ({ children }) => {
     if (!res.ok) throw new Error(data.error || 'Failed to change password');
 
     toast.success('Password changed. Please log in again.');
-    logout(false); // 🔥 force logout
+    logout(false); 
   } catch (err) {
     toast.error(err.message || 'Password change failed');
   } finally {
-    setIsLoading(false);
+    setChangePasswordLoading(false);
   }
  };
 
   // ------------------ Delete account ------------------
   const deleteAccount = async (password) => {
-  setIsLoading(true);
+    setDeleteAccountLoading(true);
 
   try {
     const res = await authFetch(`${config.API_BASE_URL}/delete-account`, {
@@ -222,7 +225,7 @@ export const AuthProvider = ({ children }) => {
   } catch (err) {
     toast.error(err.message || 'Account deletion failed');
   } finally {
-    setIsLoading(false);
+    setDeleteAccountLoading(false);
   }
  };
 
@@ -253,6 +256,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         changePassword,
         deleteAccount,
+        changePasswordLoading,
+        deleteAccountLoading,
         authFetch,
         isAuthenticated: !!user,
       }}

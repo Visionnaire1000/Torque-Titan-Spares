@@ -59,7 +59,7 @@ const Cart = () => {
                         >
                          <img
                           src={item.image}
-                          alt={item.name}
+                          alt={item.brand}
                           className="cart-item-image"> 
                           </img>
                           </Link>

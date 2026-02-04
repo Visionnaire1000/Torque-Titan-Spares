@@ -69,9 +69,9 @@ const BuyerOrders = () => {
     fetchOrders();
   }, []);
 
-  if (loading) return <p>Loading orders...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!orders.length) return <p>You have no orders yet.</p>;
+  if (loading) return <p className="message">Loading orders...</p>;
+  if (error) return <p className="message">Error: {error}</p>;
+  if (!orders.length) return <p className="message">You have no orders yet.</p>;
 
   const groupedOrders = orders.reduce((acc, order) => {
     const status = order.status.toLowerCase();
@@ -162,9 +162,10 @@ const BuyerOrders = () => {
                           <strong>
                             {item.sparepart.brand} {item.sparepart.category} for{" "}
                             {item.sparepart.vehicle_type}
-                          </strong>
+                          </strong> 
                           <p>Quantity: {item.quantity}</p>
-                          <p>Price: KES {item.price?.toLocaleString() || '0'}</p>
+                          <p>Unit Price: KES {item.price?.toLocaleString() || '0'}</p>
+                          <p>Subtotal: KES {item.subtotal?.toLocaleString() || '0'}</p>
                         </div>
                       </div>
                     ))}

@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
 import '../../styles/accountManagement.css';
 
 const AccountManagement = () => {
-  const { changePassword, deleteAccount, isLoading } = useAuth();
-
+  const { changePassword, deleteAccount,  changePasswordLoading,
+          deleteAccountLoading, } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  
   // ------------------ Change password state ------------------
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -49,7 +53,7 @@ const AccountManagement = () => {
 
         <form onSubmit={handleChangePassword}>
           <input
-            type="password"
+            type={showChangePassword ? 'text' : 'password'}
             placeholder="Current password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -57,7 +61,7 @@ const AccountManagement = () => {
           />
 
           <input
-            type="password"
+            type={showChangePassword ? 'text' : 'password'}
             placeholder="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -65,15 +69,34 @@ const AccountManagement = () => {
           />
 
           <input
-            type="password"
+            type={showChangePassword ? 'text' : 'password'}
             placeholder="Confirm new password"
             value={confirmNewPassword}
             onChange={(e) => setConfirmNewPassword(e.target.value)}
             required
           />
 
-          <button type="submit" disabled={isLoading}>
-            Change Password
+           <button
+              type="button"
+              onClick={() => setShowChangePassword((prev) => !prev)}
+              aria-label={
+                showChangePassword ? 'Hide password' : 'Show password'
+              }
+            >
+              {showChangePassword ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
+              )}
+            </button>
+
+          <button
+            type="submit"
+            disabled={changePasswordLoading}
+          >
+            {changePasswordLoading
+              ? "Changing Password..."
+              : "Change Password"}
           </button>
         </form>
       </section>
@@ -94,19 +117,36 @@ const AccountManagement = () => {
             <p>This action is permanent. Enter your password to continue.</p>
 
             <input
-              type="password"
+              type={showDeletePassword ? 'text' : 'password'}
               placeholder="Confirm password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
             />
 
+             <button
+              type="button"
+              className="toggle-btn"
+              onClick={() => setShowDeletePassword((prev) => !prev)}
+              aria-label={
+                showDeletePassword ? 'Hide password' : 'Show password'
+              }
+            >
+              {showDeletePassword ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
+              )}
+            </button>
+
             <div className="actions">
               <button
                 className="danger"
                 onClick={handleDeleteAccount}
-                disabled={isLoading}
+                disabled={deleteAccountLoading}
               >
-                Confirm Delete
+                {deleteAccountLoading
+                  ? "Deleting Account..."
+                  : "Delete Account"}
               </button>
 
               <button

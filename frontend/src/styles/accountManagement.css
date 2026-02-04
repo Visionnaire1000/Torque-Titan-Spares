@@ -1,105 +1,171 @@
+/* ===============================
+   Account Management Layout
+================================ */
 .account-management {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  font-family: Arial, sans-serif;
+  max-width: 520px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .account-management h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: rgb(0,64,128);
 }
 
+/* ===============================
+   Sections
+================================ */
 .account-management section {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  margin-bottom: 32px;
 }
 
-.account-management section h3 {
-  margin-bottom: 1rem;
-  color: #444;
+.account-management h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: red;
 }
 
-.account-management form input,
+/* ===============================
+   Forms
+================================ */
+.account-management form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
 .account-management input {
-  display: block;
   width: 100%;
-  padding: 0.55rem 0.75rem;
-  margin-bottom: 0.8rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+  padding: 12px 14px;
   font-size: 0.95rem;
-  transition: border 0.2s;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  transition: all 0.2s ease;
 }
 
-.account-management form input:focus,
 .account-management input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* ===============================
+   Buttons
+================================ */
 .account-management button {
-  padding: 0.55rem 1rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  padding: 12px 16px;
   font-size: 0.95rem;
-  transition: background 0.2s;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Primary button */
+.account-management button[type="submit"] {
+  background: rgb(0,64,128);
+  color: #ffffff;
+}
+
+.account-management button[type="submit"]{
+  background: rgb(0,64,128);
+}
+
+.account-management button:hover{
+   background-color: rgb(0, 58, 115, 0.466);
 }
 
 .account-management button:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+  background-color: #ccc;
 }
 
-.account-management form button {
-  background-color: #007bff;
-  color: #fff;
+/* ===============================
+   Password Toggle Button
+================================ */
+.toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 42%;
+  transform: translateY(-50%);
+  background: transparent;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
 }
 
-.account-management form button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
 
-/* Danger Zone */
+/* ===============================
+   Danger Zone
+================================ */
 .danger-zone {
-  background-color: #fff0f0;
-  padding: 1rem;
-  border-radius: 8px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
 }
 
 .danger-zone h3 {
-  color: #c82333;
+  color: #b91c1c;
 }
 
-.danger-zone .danger {
-  background-color: #c82333;
-  color: #fff;
-  margin-top: 0.5rem;
+/* Danger buttons */
+button.danger {
+  background: #dc2626;
+  color: #ffffff;
 }
 
-.danger-zone .danger:hover:not(:disabled) {
-  background-color: #a71d2a;
+button.danger:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
-/* Delete confirm section */
+/* ===============================
+   Delete Confirmation
+================================ */
+.delete-confirm {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  position: relative;
+}
+
 .delete-confirm p {
-  margin-bottom: 0.5rem;
   font-size: 0.9rem;
-  color: #444;
+  color: #7f1d1d;
+  margin-bottom: 12px;
 }
 
-.delete-confirm .actions {
+/* ===============================
+   Action Buttons
+================================ */
+.actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.delete-confirm .actions button {
+.actions button {
   flex: 1;
+}
+
+.actions button:not(.danger) {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.actions button:not(.danger):hover {
+  background: #d1d5db;
 }

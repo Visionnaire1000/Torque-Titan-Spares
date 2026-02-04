@@ -61,7 +61,6 @@ const Login = () => {
 
           <button
               type="button"
-              className="toggle-btn"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={
                 showPassword ? 'Hide password' : 'Show password'

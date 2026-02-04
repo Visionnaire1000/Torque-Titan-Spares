@@ -75,10 +75,16 @@ const Register = () => {
               required
               aria-describedby="password-help"
             />
+          </div>
+
+          {passwordError && (
+            <p id="password-help" className="password-error">
+              {passwordError}
+            </p>
+          )}
 
             <button
               type="button"
-              className="toggle-btn"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={
                 showPassword ? 'Hide password' : 'Show password'
@@ -90,13 +96,6 @@ const Register = () => {
                 <Eye size={20} />
               )}
             </button>
-          </div>
-
-          {passwordError && (
-            <p id="password-help" className="password-error">
-              {passwordError}
-            </p>
-          )}
 
           <button
             type="submit"

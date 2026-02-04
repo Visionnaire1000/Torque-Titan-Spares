@@ -80,7 +80,7 @@
 }
 
 .register-form button:hover {
-  background-color: rgb(0, 58, 115);
+  background-color: rgba(0, 58, 115, 0.466);
 }
 
 .register-form button:disabled {

@@ -2,11 +2,8 @@ from flask_restful import Resource
 from flask import request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from datetime import timedelta
-from sqlalchemy import desc, asc, func
-from sqlalchemy.orm import joinedload
-import uuid
 from core.extensions import db
-from database.models import Users, SpareParts, Orders, OrderItems, Reviews, ReviewReactions
+from database.models import Users, SpareParts, Orders, Reviews, ReviewReactions
 
 # ------------------ Auth ------------------
 class Register(Resource):
@@ -453,6 +450,7 @@ class OrdersResource(Resource):
                         "id": item.id,
                         "quantity": item.quantity,
                         "price": float(item.unit_price),
+                        "subtotal": float(item.subtotal),
                         "sparepart": {
                             "id": item.sparepart.id,
                             "brand": item.sparepart.brand,
@@ -493,7 +491,7 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": f"Order {order_id} status updated to {new_status}"}, 200
  
- 
+
 class AdminOrders(Resource):
     #View all orders (admin only).
     @jwt_required()

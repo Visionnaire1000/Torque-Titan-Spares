@@ -121,7 +121,7 @@ html, body {
 }
 
 .submit-button:hover {
-  background-color: rgb(0, 58, 115);
+  background-color: rgba(0, 58, 115, 0.466);
 }
 
 .submit-button:disabled {
@@ -147,3 +147,4 @@ html, body {
 .register-link .link:hover {
   text-decoration: underline;
 }
+

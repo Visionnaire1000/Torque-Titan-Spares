@@ -117,37 +117,124 @@ html, body {
   gap: 15px;
 }
 
-
+/* ================================
+   Dashboard Dropdown Wrapper
+================================ */
 .dashboard-dropdown {
   position: relative;
-  display: flex;
-  margin-right: 50px;
+  display: inline-block;
 }
 
+/* ================================
+   Menu Button (Hamburger)
+================================ */
 .dashboard-button {
-  background: none;
+  background: transparent;
+  color: white;
   border: none;
   cursor: pointer;
-  color: white;
-  padding: 4px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.dashboard-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ================================
+   Dropdown Menu (Slides LEFT)
+================================ */
 .dropdown-menu {
   position: absolute;
-  top: 35px;
-  right: 0;
-  background-color: white;
-  color: black;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  margin-top: 36px;
+  margin-left: -54px;
+  transform: translateX(-100%);
+  min-width: 230px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 8px 0;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  z-index: 100;
-  min-width: 120px;
-  margin-top: 10px;
-  margin-bottom: 3px;
-  margin-left: 2px;
+  z-index: 999;
+  animation: slideInLeft 0.25s ease forwards;
 }
+
+/* ================================
+   Slide In Animation
+================================ */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-85%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+}
+
+/* ================================
+   Navigation Tabs
+================================ */
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: #374151;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tab:hover {
+  background: #f3f4f6;
+}
+
+/* ================================
+   Active Tab Styling
+================================ */
+.active-tab {
+  background: #eef2ff;
+  color: rgb(0, 64, 128);
+  font-weight: 600;
+  border-left: 4px solid rgb(0,64,128);
+}
+
+/* ================================
+   Icons inside tabs
+================================ */
+.tab svg,
+.tab .icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ================================
+   Logout Button
+================================ */
+.dropdown-menu button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-menu button:hover {
+  background: #fee2e2;
+}
+
 
 .dropdown-item {
   display: flex;
@@ -160,25 +247,6 @@ html, body {
   text-align: left;
   cursor: pointer;
 }
-
-
-.dropdown-menu a,
-.dropdown-menu button {
-  padding: 10px;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: rgb(0,64,128);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.dropdown-menu a:hover,
-.dropdown-menu button:hover {
-  background-color: rgba(0, 64, 128, 0.267);
-}  
 
 
 /* Icon button */
@@ -206,7 +274,6 @@ html, body {
 }
 
 
-
 .input-container input {
   padding: 0.6rem 0.8rem;
   border: 1px solid #ccc;
@@ -219,3 +286,5 @@ html, body {
   border-color: rgb(0, 64, 128);
   outline: none;
 }
+
+

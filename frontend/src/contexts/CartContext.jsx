@@ -24,6 +24,7 @@ export const CartProvider = ({ children }) => {
     const normalizedItem = {
       id: item.id,
       brand: item.brand ,
+      category: item.category ,
       vehicle_type: item.vehicle_type ,
       buying_price: item.buying_price ,
       image: item.image
@@ -41,7 +42,8 @@ export const CartProvider = ({ children }) => {
       return [...prevItems, { ...normalizedItem, quantity: qty }];
     });
 
-    toast.success(`${normalizedItem.brand} added to cart`);
+    toast.success(`${normalizedItem.brand} ${normalizedItem.category} for
+       ${normalizedItem.vehicle_type} added to cart`);
   };
 
   // Remove an item completely
