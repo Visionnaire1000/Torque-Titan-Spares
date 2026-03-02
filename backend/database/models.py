@@ -2,7 +2,9 @@ import uuid
 from sqlalchemy import event
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
-from datetime import datetime
+from datetime import datetime , timedelta
+import secrets
+import hashlib
 from core.extensions import db, bcrypt 
 
 #------------------------------UUID Helper-------------------------------
@@ -17,6 +19,15 @@ class Users(db.Model, SerializerMixin):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
     role = db.Column(db.String, default="buyer")  #  buyer,super_admin,admin
+    
+    # -----------------------Email verification / OTP-----------------------
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    email_otp_hash = db.Column(db.String, nullable=True)
+    email_otp_expires = db.Column(db.DateTime, nullable=True)
+    otp_last_sent = db.Column(db.DateTime, nullable=True)
+    otp_resend_count = db.Column(db.Integer, default=0)
+    otp_attempts = db.Column(db.Integer, default=0)
+    otp_locked_until = db.Column(db.DateTime, nullable=True)
 
     # -------------------------- RELATIONSHIPS --------------------------------
     orders = db.relationship("Orders", back_populates="users", cascade="all, delete-orphan")
@@ -25,11 +36,22 @@ class Users(db.Model, SerializerMixin):
 
     # ------------------------- SERIALIZE RULES--------------------------------
     serialize_rules = (
-    '-password_hash',       
-    '-orders.users',         
-    '-reviews.users',       
-    '-likes.users',      
-     )
+    '-password_hash',
+    '-email_otp_hash',
+    '-email_otp_expires',
+    '-otp_last_sent',
+    '-otp_resend_count',
+    '-otp_attempts',
+    '-otp_locked_until',
+
+    # recursion blockers
+    '-orders.users',
+    '-orders.order_items.order',
+    '-reviews.users',
+    '-reviews.spareparts.reviews',
+    '-reviews.spareparts.order_items',
+    '-likes.users',
+  )
     
     #--------------------------VALIDATIONS-----------------------------------
     @validates('email')
@@ -46,6 +68,76 @@ class Users(db.Model, SerializerMixin):
           #(checks hashed password using bcrypt)
     def check_password(self, password: str) -> bool:
         return bcrypt.check_password_hash(self.password_hash, password)
+    
+    #(--------OTP METHODS----------)
+    OTP_EXPIRY_MINUTES = 10
+    OTP_RESEND_COOLDOWN_SECONDS = 60
+    MAX_OTP_RESENDS = 5
+    MAX_OTP_ATTEMPTS = 5
+    OTP_LOCK_MINUTES = 15
+
+    def _hash_otp(self, otp: str) -> str:
+        return hashlib.sha256(otp.encode()).hexdigest()
+
+    def generate_email_otp(self):
+        raw_otp = str(secrets.randbelow(900000) + 100000)
+
+        self.email_otp_hash = self._hash_otp(raw_otp)
+        self.email_otp_expires = datetime.utcnow() + timedelta(minutes=self.OTP_EXPIRY_MINUTES)
+        self.otp_last_sent = datetime.utcnow()
+
+        # ensure counters are never None
+        self.otp_resend_count = (self.otp_resend_count or 0) + 1
+        self.otp_attempts = 0
+        self.otp_locked_until = None
+
+        return raw_otp
+     
+    def can_resend_otp(self, cooldown_seconds=60, max_resends=5):
+        now = datetime.utcnow()
+
+        # max resends reached
+        if self.otp_resend_count >= max_resends:
+           return False, 0  # cannot resend, no countdown
+
+        # never sent before
+        if not self.otp_last_sent:
+           return True, 0
+
+        elapsed = (now - self.otp_last_sent).total_seconds()
+        if elapsed >= cooldown_seconds:
+            return True, 0  # cooldown passed
+        else:
+           remaining = int(cooldown_seconds - elapsed)
+           return False, remaining  # cannot resend yet, show countdown
+
+    def verify_email_otp(self, otp: str):
+        if self.otp_locked_until and datetime.utcnow() < self.otp_locked_until:
+            return "locked"
+
+        if not self.email_otp_hash or not self.email_otp_expires:
+            return False
+
+        if self.email_otp_expires < datetime.utcnow():
+            return False
+
+        if self._hash_otp(otp) != self.email_otp_hash:
+            self.otp_attempts += 1
+
+            if self.otp_attempts >= 5:
+                self.otp_locked_until = datetime.utcnow() + timedelta(minutes=15)
+
+            return False
+
+        # Success
+        self.email_verified = True
+        self.email_otp_hash = None
+        self.email_otp_expires = None
+        self.otp_attempts = 0
+        self.otp_resend_count = 0
+        self.otp_locked_until = None
+
+        return True
     
 #------------------------------SPARE PARTS MODEL---------------------------------
 class SpareParts(db.Model, SerializerMixin):
@@ -75,9 +167,12 @@ class SpareParts(db.Model, SerializerMixin):
 
     # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    "-order_items.sparepart.order_items",  # stop circular serialization(infinite recursion)
-    "-reviews.spareparts",      
+    "-order_items",                 # stops biggest recursion path
+    "-reviews.spareparts",          # prevent review → sparepart loop
+    "-reviews.users.reviews",       # prevent user → reviews loop
+    "-reviews.likes.reviews",       # extra safety (recommended)
     )
+
 
     #--------------------------VALIDATIONS-----------------------------------
     @validates('vehicle_type')
@@ -178,10 +273,20 @@ class ReviewReactions(db.Model, SerializerMixin):
     #--------------------------VALIDATIONS-----------------------------------
     @validates('is_like')
     def validate_is_like(self, key, value):
-        if not isinstance(value, bool):
-            raise ValueError("is_like must be True or False")
-        return value
-    
+       if isinstance(value, str):
+        if value.lower() in ["true", "1"]:
+            value = True
+        elif value.lower() in ["false", "0"]:
+            value = False
+
+       # normalize ints
+       if isinstance(value, int):
+           value = bool(value)
+
+       if not isinstance(value, bool):
+          raise ValueError("is_like must be True or False")
+
+       return value
   
 #------------------------------ORDERS MODEL---------------------------------
 class Orders(db.Model, SerializerMixin):
@@ -213,9 +318,10 @@ class Orders(db.Model, SerializerMixin):
     "-users",                         # never serialize user object
     "-order_items.order",             # stop order -> items -> order loop
     "-order_items.sparepart.order_items",  # stop sparepart -> order_items loop
-    "-order_items.sparepart.reviews",      # optional: avoid heavy payloads
-  )
-
+    "-order_items.sparepart.reviews",      #  avoid heavy payloads
+    "-order_items.sparepart.reviews.users",    
+   )
+    
     #-------------------------CUSTOM METHOD---------------------------------
         #(calculates total-price of order items)
     def calculate_total(self):

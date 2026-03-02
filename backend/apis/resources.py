@@ -1,8 +1,10 @@
 from flask_restful import Resource
 from flask import request
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, verify_jwt_in_request,get_jwt_identity
 from datetime import timedelta
 from core.extensions import db
+from utils.tasks import send_email_task
+from datetime import datetime
 from database.models import Users, SpareParts, Orders, Reviews, ReviewReactions
 
 # ------------------ Auth ------------------
@@ -13,52 +15,130 @@ class Register(Resource):
         password = data.get('password')
 
         if not email or not password:
-            return {"error": "Email and password are required"}, 400
+            return {"error": "Email and password required", "wait_seconds": 0}, 400
 
-        if Users.query.filter_by(email=email).first():
-            return {"error": "Email already exists"}, 409
+        existing_user = Users.query.filter_by(email=email).first()
+        if existing_user:
+            return {"error": "Email already exists. Use resend to get OTP again.", "wait_seconds": 0}, 409
 
         try:
             user = Users(email=email)
             user.set_password(password)
+            user.email_verified = False
+
+            # generate OTP
+            raw_otp = user.generate_email_otp()
+
             db.session.add(user)
             db.session.commit()
-            return {"status": "success", "message": "Account created successfully"}, 201
-        except Exception as e:
-            db.session.rollback()
-            print("Error registering user:", e)
-            return {"error": "Internal server error"}, 500
-        
-class Login(Resource):
-    def post(self):
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
 
-        if not email or not password:
-            return {"error": "Email and password are required"}, 400
-
-        user = Users.query.filter_by(email=email).first()
-
-        if user and user.check_password(password):
-            access_token = create_access_token(
-                identity=str(user.id),
-                fresh=True,
-                expires_delta=timedelta(minutes=15)
-            )
-            refresh_token = create_refresh_token(
-                identity=str(user.id),
-                expires_delta=timedelta(days=30)
-            )
+            # send OTP async via Brevo
+            send_email_task.delay(user.email, raw_otp)
 
             return {
                 "status": "success",
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "role": user.role  
-            }, 200
+                "message": "Verification code sent to your email",
+                "wait_seconds": Users.OTP_RESEND_COOLDOWN_SECONDS
+            }, 201
 
-        return {"error": "Invalid credentials"}, 401
+        except Exception as e:
+            db.session.rollback()
+            print("Register error:", e)
+            return {"error": "Internal server error", "wait_seconds": 0}, 500
+
+class ResendOTP(Resource):
+    def post(self):
+        data = request.get_json() or {}
+        email = data.get("email")
+
+        user = None
+        is_logged_in = False
+
+        # Try JWT first (logged-in / during password change)
+        try:
+            verify_jwt_in_request(optional=True)
+            user_id = get_jwt_identity()
+            if user_id:
+                user = Users.query.get(user_id)
+                is_logged_in = True
+        except Exception:
+            user = None
+
+        # Fallback to email (during registration)
+        if not user and email:
+            user = Users.query.filter_by(email=email).first()
+
+        if not user:
+            return {"status": "error", "message": "User not found", "wait_seconds": 0}, 404
+
+        # Only block if user is already verified(during registration,not during password change)
+        if not is_logged_in and user.email_verified:
+            return {"status": "info", "message": "Email already verified", "wait_seconds": 0}, 200
+
+        # Cooldown check
+        can_resend, wait_seconds = user.can_resend_otp(
+            cooldown_seconds=Users.OTP_RESEND_COOLDOWN_SECONDS,
+            max_resends=Users.MAX_OTP_RESENDS,
+        )
+        if not can_resend:
+            return {"status": "error", "message": "Too many failed attempts. OTP locked for 15 minutes", "wait_seconds": wait_seconds}, 429
+
+        # Generate OTP
+        raw_otp = user.generate_email_otp()
+        db.session.commit()
+        send_email_task.delay(user.email, raw_otp)
+
+        return { "status": "success", 
+                 "message": "New OTP sent to your email", "wait_seconds": Users.OTP_RESEND_COOLDOWN_SECONDS}, 200
+    
+class VerifyAccount(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get("email")
+        otp = data.get("otp")
+
+        user = Users.query.filter_by(email=email).first()
+        if not user:
+            return {"error": "User not found"}, 404
+
+        result = user.verify_email_otp(otp)
+
+        if result == "locked":
+            return {"error": "Too many failed attempts. OTP locked for 15 minutes."}, 403
+
+        if not result:
+            db.session.commit()
+            return {"error": "Invalid or expired code"}, 400
+
+        db.session.commit()
+        return {"message": "Account verified successfully"}, 200
+    
+
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            return {"error": "Email and password required"}, 400
+
+        user = Users.query.filter_by(email=email).first()
+
+        if not user or not user.check_password(password):
+            return {"error": "Invalid credentials"}, 401
+
+        if not user.email_verified:
+            return {"error": "Please verify your email first"}, 403
+
+        access_token = create_access_token(identity=user.id)
+        refresh_token = create_refresh_token(identity=user.id)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "role": user.role
+        }, 200
     
 
 class TokenRefresh(Resource):
@@ -72,35 +152,78 @@ class TokenRefresh(Resource):
         )
         return {"access_token": new_access_token}, 200
 
-        
 class ChangePassword(Resource):
     @jwt_required()
     def post(self):
-        data = request.get_json()
-        current_password = data.get('current_password')
-        new_password = data.get('new_password')
+        data = request.get_json() or {}
+        current_password = data.get("current_password")
+        otp = data.get("otp")
+        new_password = data.get("new_password")
 
-        if not current_password or not new_password:
-            return {"error": "Current and new password are required"}, 400
+        if not current_password:
+            return {"error": "Current password is required"}, 400
 
-        user_id = get_jwt_identity()
-        user = Users.query.get(user_id)
+        user = Users.query.get(get_jwt_identity())
+        if not user or not user.check_password(current_password):
+            return {"error": "Invalid credentials"}, 401
 
-        if not user:
-            return {"error": "User not found"}, 404
+        # ------------------ OTP LOCK CHECK ------------------
+        if user.otp_locked_until and datetime.utcnow() < user.otp_locked_until:
+            remaining = int(
+                (user.otp_locked_until - datetime.utcnow()).total_seconds()
+            )
+            return {
+                "error": "Too many failed attempts. OTP locked for 15 minutes",
+                "wait_seconds": max(remaining, 0),
+            }, 423
 
-        if not user.check_password(current_password):
-            return {"error": "Current password is incorrect"}, 401
+        # ---------SEND OTP FIRST TIME ---------------------
+        if not otp and not new_password:
+            raw_otp = user.generate_email_otp()
+            db.session.commit()
+            send_email_task.delay(user.email, raw_otp)
+
+            return {
+                "status": "otp_sent",
+                "message": "OTP sent to your email",
+                "wait_seconds": Users.OTP_RESEND_COOLDOWN_SECONDS,
+            }, 200
+
+        # -------VERIFY OTP & CHANGE PASSWORD -------------------
+        if not otp or not new_password:
+            return {"error": "OTP and new password are required"}, 400
+
+        result = user.verify_email_otp(otp)
+        db.session.commit()
+
+        if result == "locked":
+            remaining = int(
+                (user.otp_locked_until - datetime.utcnow()).total_seconds()
+            ) if user.otp_locked_until else Users.OTP_RESEND_COOLDOWN_SECONDS
+
+            return {
+                "error": "Too many failed attempts. OTP locked for 15 minutes",
+                "wait_seconds": max(remaining, 0),
+            }, 423
+
+        elif not result:
+            return {"error": "Invalid or expired OTP"}, 401
 
         try:
             user.set_password(new_password)
             db.session.commit()
-            return {"status": "success", "message": "Password updated successfully"}, 200
+
+            return {
+                "status": "success",
+                "message": "Password updated successfully",
+            }, 200
+
         except Exception as e:
             db.session.rollback()
             print("Password change error:", e)
-            return {"error": "Internal server error"}, 500\
-            
+            return {"error": "Internal server error"}, 500
+        
+        
 class DeleteAccount(Resource):
     @jwt_required()
     def delete(self):
@@ -383,47 +506,67 @@ class ReviewEditResource(Resource):
             return {"error": "Failed to delete review"}, 500
 
         return {"message": "Review deleted"}, 200
-
-
+    
+    
 class ReviewReactionsResource(Resource):
     @jwt_required()
     def post(self, review_id):
-        """React to a review (like/dislike)"""
         current_user_id = get_jwt_identity()
-        user = Users.query.get(current_user_id)
-        if not user:
-            return {"error": "Invalid user"}, 401
-
         review = Reviews.query.get_or_404(review_id)
+
         if review.user_id == current_user_id:
             return {"error": "Cannot react to your own review"}, 400
 
         data = request.get_json() or {}
-        is_like = data.get("is_like")
-        if not isinstance(is_like, bool):
+        raw = data.get("is_like")
+
+        # normalize input to Python boolean
+        if isinstance(raw, bool):
+            is_like = raw
+        elif isinstance(raw, str):
+            if raw.lower() in ["true", "1"]:
+                is_like = True
+            elif raw.lower() in ["false", "0"]:
+                is_like = False
+            else:
+                return {"error": "is_like must be true or false"}, 400
+        elif isinstance(raw, int):
+            is_like = bool(raw)
+        else:
             return {"error": "is_like must be true or false"}, 400
 
-        # Check if reaction already exists
-        existing = ReviewReactions.query.filter_by(user_id=current_user_id, review_id=review.id).first()
+        # fetch existing reaction
+        existing = ReviewReactions.query.filter_by(
+            user_id=current_user_id,
+            review_id=review.id
+        ).first()
+
         if existing:
-            existing.is_like = is_like
-            action = "updated"
+            existing.is_like = is_like  
         else:
-            existing = ReviewReactions(user_id=current_user_id, review_id=review.id, is_like=is_like)
+            existing = ReviewReactions(
+                user_id=current_user_id,
+                review_id=review.id,
+                is_like=is_like
+            )
             db.session.add(existing)
-            action = "added"
 
         try:
-            db.session.commit()
-
-            # Update spare part stats (likes/dislikes)
+            # update stats based on reactions
             review.spareparts.update_review_stats()
             db.session.commit()
+
+            return {
+                "review": {
+                    "id": review.id,
+                    "total_likes": review.total_likes,
+                    "total_dislikes": review.total_dislikes
+                }
+            }, 200
+
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 400
-
-        return {"message": f"Reaction {action}"}, 200
 
 # ------------------ Orders ------------------
 class OrdersResource(Resource):

@@ -96,7 +96,7 @@ html, body {
 
 .logo img {
   width: 50%;
-  height: 40%;
+  height: 30%;
   display: flex;
   justify-content: left;
   margin-left: -10px;
@@ -110,6 +110,8 @@ html, body {
   height: 30%;
   margin-right: -300px;
 }
+
+
 
 .right-section {
   display: flex;
@@ -139,6 +141,18 @@ html, body {
   justify-content: center;
 }
 
+.navbar.logged-out .dashboard-button {
+  background: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  margin-right: 100px;
+  align-items: center;
+  justify-content: center;
+}
+
 .dashboard-button svg {
   width: 22px;
   height: 22px;
@@ -162,6 +176,25 @@ html, body {
   z-index: 999;
   animation: slideInLeft 0.25s ease forwards;
 }
+
+.navbar.logged-out .dropdown-menu {
+  position: absolute;
+  margin-top: 36px;
+  margin-left: -67px;
+  transform: translateX(-100%);
+  min-width: 230px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 8px 0;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  animation: slideInLeft 0.25s ease forwards;
+}
+
+
+
 
 /* ================================
    Slide In Animation
@@ -247,7 +280,6 @@ html, body {
   text-align: left;
   cursor: pointer;
 }
-
 
 /* Icon button */
 .navbar-search-icon {

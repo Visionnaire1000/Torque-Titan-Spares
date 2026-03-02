@@ -21,23 +21,39 @@ def clear_all_data():
         db.session.commit()
         print("✅ All existing data cleared")
 
-
 def seed_super_admin():
+    """Create a super admin user without OTP verification."""
     with app.app_context():
         email = os.getenv("SUPERADMIN_EMAIL")
         password = os.getenv("SUPERADMIN_PASSWORD")
 
-        # (Create super admin with hashed password)
+        if not email or not password:
+            raise ValueError("SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set in .env")
+
+        # Check if superadmin already exists
+        existing_admin = Users.query.filter_by(email=email).first()
+        if existing_admin:
+            print("⚠️ Super admin already exists")
+            return
+
+        # Create super admin
         super_admin = Users(
             email=email,
-            role="super_admin"
+            role="super_admin",
+            email_verified=True,  # Skip OTP verification
+            otp_resend_count=0,
+            otp_attempts=0,
+            otp_last_sent=None,
+            email_otp_hash=None,
+            email_otp_expires=None
         )
-        super_admin.set_password(password)  # use model method to hash password
+        super_admin.set_password(password)
 
         db.session.add(super_admin)
         db.session.commit()
 
-        print("✅ Super admin created")
+        print(f"✅ Super admin '{email}' created successfully")
+
 
 # ----------------------------------SPARE PARTS SEEDING----------------------------------------------------
 def seed_spareparts():

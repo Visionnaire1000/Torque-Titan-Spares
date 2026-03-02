@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: dbd0a058f272
+Revision ID: 21879f70e6f6
 Revises: 
-Create Date: 2025-10-08 12:06:26.457734
+Create Date: 2026-02-15 17:18:41.043508
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'dbd0a058f272'
+revision = '21879f70e6f6'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -41,6 +41,13 @@ def upgrade():
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password_hash', sa.String(), nullable=False),
     sa.Column('role', sa.String(), nullable=True),
+    sa.Column('email_verified', sa.Boolean(), nullable=False),
+    sa.Column('email_otp_hash', sa.String(), nullable=True),
+    sa.Column('email_otp_expires', sa.DateTime(), nullable=True),
+    sa.Column('otp_last_sent', sa.DateTime(), nullable=True),
+    sa.Column('otp_resend_count', sa.Integer(), nullable=True),
+    sa.Column('otp_attempts', sa.Integer(), nullable=True),
+    sa.Column('otp_locked_until', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )

@@ -61,10 +61,15 @@
 }
 
 .register-form .password-error {
-  color: red;
-  font-size: 0.9rem;
-  margin-top: -0.5rem;
-  margin-bottom: 1rem;
+  display: block;           /* ensures it takes its own line */
+  margin-top: 5px;          /* spacing from the input */
+  font-size: 0.9rem;        /* slightly smaller than input text */
+  color: #d9534f;           /* red to indicate requirement not met */
+  background-color: #f8d7da; /* light red background for emphasis */
+  padding: 5px 10px;        /* some padding for readability */
+  border-radius: 5px;       /* rounded corners */
+  border: 1px solid #f5c2c7; /* subtle border */
+  font-weight: 500;   
 }
 
 .register-form button {
@@ -79,11 +84,10 @@
   transition: background-color 0.3s ease;
 }
 
-.register-form button:hover {
-  background-color: rgba(0, 58, 115, 0.466);
-}
 
 .register-form button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+

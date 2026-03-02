@@ -26,7 +26,10 @@ const StarRating = ({ value = 0, onChange, size = 28, readonly = false }) => {
           <span
             key={star}
             className={`star ${starClass}`}
-            style={{ fontSize: size, cursor: readonly ? "default" : "pointer" }}
+            style={{
+              fontSize: size,
+              cursor: readonly ? "default" : "pointer",
+            }}
             onClick={() => handleClick(star)}
           >
             {starClass === "half" ? "⯨" : "★"}
@@ -70,6 +73,7 @@ const ItemDetails = () => {
         const userReaction = r.likes?.find(
           (l) => l.user_id === currentUserId
         );
+
         return {
           ...r,
           user_reaction: userReaction
@@ -103,7 +107,9 @@ const ItemDetails = () => {
 
   const refreshItem = async () => {
     try {
-      const res = await fetch(`${config.API_BASE_URL}/spareparts/${id}`);
+      const res = await fetch(
+        `${config.API_BASE_URL}/spareparts/${id}`
+      );
       const data = await res.json();
       setItem(data);
     } catch (err) {
@@ -119,11 +125,14 @@ const ItemDetails = () => {
     updateFn,
   }) => {
     try {
-      const res = await authFetch(`${config.API_BASE_URL}${endpoint}`, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: body ? JSON.stringify(body) : undefined,
-      });
+      const res = await authFetch(
+        `${config.API_BASE_URL}${endpoint}`,
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: body ? JSON.stringify(body) : undefined,
+        }
+      );
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -131,9 +140,10 @@ const ItemDetails = () => {
       }
 
       const data = method !== "DELETE" ? await res.json() : null;
-      if (updateFn) updateFn(data);
 
+      if (updateFn) updateFn(data);
       if (successMessage) toast.success(successMessage);
+
       refreshItem();
     } catch (err) {
       toast.error(err.message || "Action failed");
@@ -150,6 +160,7 @@ const ItemDetails = () => {
     }
 
     const trimmedComment = comment.trim();
+
     if (!rating && !trimmedComment) {
       toast.error("Add a rating or comment");
       return;
@@ -163,7 +174,8 @@ const ItemDetails = () => {
         comment: trimmedComment || undefined,
       },
       successMessage: "Review added",
-      updateFn: (newReview) => setReviews([newReview, ...reviews]),
+      updateFn: (newReview) =>
+        setReviews([newReview, ...reviews]),
     });
 
     setRating(0);
@@ -184,6 +196,7 @@ const ItemDetails = () => {
 
   const saveEdit = (reviewId) => {
     const trimmedComment = editComment.trim();
+
     if (!editRating && !trimmedComment) {
       toast.error("Add a rating or comment");
       return;
@@ -199,7 +212,9 @@ const ItemDetails = () => {
       successMessage: "Review updated",
       updateFn: (updatedReview) =>
         setReviews((prev) =>
-          prev.map((r) => (r.id === reviewId ? updatedReview : r))
+          prev.map((r) =>
+            r.id === reviewId ? updatedReview : r
+          )
         ),
     });
 
@@ -212,7 +227,9 @@ const ItemDetails = () => {
       endpoint: `/reviews/edit/${reviewId}`,
       successMessage: "Review deleted",
       updateFn: () =>
-        setReviews((prev) => prev.filter((r) => r.id !== reviewId)),
+        setReviews((prev) =>
+          prev.filter((r) => r.id !== reviewId)
+        ),
     });
 
   /* ---------- Likes / Dislikes ---------- */
@@ -227,27 +244,47 @@ const ItemDetails = () => {
         let likes = Number(r.total_likes || 0);
         let dislikes = Number(r.total_dislikes || 0);
 
+        // User has already liked
         if (r.user_reaction === "like") {
-          if (isLike) return { ...r, total_likes: likes - 1, user_reaction: null };
-          return {
-            ...r,
-            total_likes: likes - 1,
-            total_dislikes: dislikes + 1,
-            user_reaction: "dislike",
-          };
+          if (isLike) {
+            // Remove like
+            return {
+              ...r,
+              total_likes: Math.max(likes - 1, 0),
+              user_reaction: null,
+            };
+          } else {
+            // Switch from like to dislike
+            return {
+              ...r,
+              total_likes: Math.max(likes - 1, 0),
+              total_dislikes: dislikes + 1,
+              user_reaction: "dislike",
+            };
+          }
         }
 
+        // User has already disliked
         if (r.user_reaction === "dislike") {
-          if (!isLike)
-            return { ...r, total_dislikes: dislikes - 1, user_reaction: null };
-          return {
-            ...r,
-            total_dislikes: dislikes - 1,
-            total_likes: likes + 1,
-            user_reaction: "like",
-          };
+          if (!isLike) {
+            // Remove dislike
+            return {
+              ...r,
+              total_dislikes: Math.max(dislikes - 1, 0),
+              user_reaction: null,
+            };
+          } else {
+            // Switch from dislike to like
+            return {
+              ...r,
+              total_likes: likes + 1,
+              total_dislikes: Math.max(dislikes - 1, 0),
+              user_reaction: "like",
+            };
+          }
         }
 
+        // User had no reaction yet
         return {
           ...r,
           total_likes: isLike ? likes + 1 : likes,
@@ -272,10 +309,12 @@ const ItemDetails = () => {
       {/* ---------- Item Info ---------- */}
       <div className="item-main">
         <img src={item.image} alt={item.brand} />
+
         <div className="item-info">
           <h2>
             {item.brand} {item.category} for {item.vehicle_type}
           </h2>
+
           <p id="price">
             KES {item.buying_price?.toLocaleString() || "0"}
             {item.discount_percentage > 0 && (
@@ -284,11 +323,15 @@ const ItemDetails = () => {
               </span>
             )}
           </p>
+
           <p id="describe">{item.description}</p>
 
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <StarRating value={averageRating} readonly size={22} />
-            <span>{averageRating.toFixed(1)}</span>
+            <span>
+              {averageRating.toFixed(1)} (
+              {reviews.filter((r) => r.rating != null).length})
+            </span>
           </div>
 
           <button onClick={() => addItem(item)}>Add To Cart</button>
@@ -314,48 +357,79 @@ const ItemDetails = () => {
         </p>
       )}
 
-      {/* ---------- Reviews ---------- */}
+      {/* ---------- Reviews Section(comments) ---------- */}
       <div className="reviews-section">
-        <h3>Customer Reviews</h3>
+        <h3>
+          Customer Reviews (
+          {reviews.filter((r) => r.comment?.trim()).length})
+        </h3>
 
         {reviews.map((r) => (
           <div key={r.id} className="review-card">
             {editingReviewId === r.id ? (
               <>
-                <StarRating value={editRating} onChange={setEditRating} />
+                <StarRating
+                  value={editRating}
+                  onChange={setEditRating}
+                />
                 <textarea
                   value={editComment}
-                  onChange={(e) => setEditComment(e.target.value)}
+                  onChange={(e) =>
+                    setEditComment(e.target.value)
+                  }
                 />
-                <button onClick={() => saveEdit(r.id)}>Save</button>
+                <button onClick={() => saveEdit(r.id)}>
+                  Save
+                </button>
                 <button onClick={cancelEdit}>Cancel</button>
               </>
             ) : (
               <>
-                <StarRating value={r.rating || 0} readonly size={20} />
-                {r.comment && <p className="comment">{r.comment}</p>}
+                <StarRating
+                  value={r.rating || 0}
+                  readonly
+                  size={20}
+                />
+                {r.comment && (
+                  <p className="comment">{r.comment}</p>
+                )}
 
                 {r.user_id === currentUserId ? (
                   <>
-                    <button onClick={() => startEdit(r)}>Edit</button>
-                    <button onClick={() => deleteReview(r.id)}>Delete</button>
+                    <button onClick={() => startEdit(r)}>
+                      Edit
+                    </button>
+                    <button onClick={() => deleteReview(r.id)}>
+                      Delete
+                    </button>
                   </>
                 ) : (
                   <div style={{ display: "flex", gap: 10 }}>
+                    {/* Like button */}
                     <button
-                      onClick={() => reactToReview(r.id, true, r.user_id)}
+                      onClick={() =>
+                        reactToReview(r.id, true, r.user_id)
+                      }
                       style={{
                         fontWeight:
-                          r.user_reaction === "like" ? "bold" : "normal",
+                          r.user_reaction === "like"
+                            ? "bold"
+                            : "normal",
                       }}
                     >
                       👍 {r.total_likes || 0}
                     </button>
+
+                    {/* Dislike button */}
                     <button
-                      onClick={() => reactToReview(r.id, false, r.user_id)}
+                      onClick={() =>
+                        reactToReview(r.id, false, r.user_id)
+                      }
                       style={{
                         fontWeight:
-                          r.user_reaction === "dislike" ? "bold" : "normal",
+                          r.user_reaction === "dislike"
+                            ? "bold"
+                            : "normal",
                       }}
                     >
                       👎 {r.total_dislikes || 0}

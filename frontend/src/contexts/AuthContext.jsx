@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
 
   const refreshTimer = useRef(null);
@@ -160,52 +161,166 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ------------------ Register ------------------
-  const register = async (email, password) => {
-    setIsLoading(true);
+// ------------------ OTP state ------------------
+const [otpSent, setOtpSent] = useState(false);
+const [otpCountdown, setOtpCountdown] = useState(0);
+const otpTimerRef = useRef(null);
 
-    try {
-      const res = await fetch(`${config.API_BASE_URL}/register`, {
+// ------------------ OTP countdown ------------------
+const startOtpCountdown = (seconds) => {
+  setOtpCountdown(seconds);
+  setOtpSent(true);
+
+  if (otpTimerRef.current) clearInterval(otpTimerRef.current);
+
+  otpTimerRef.current = setInterval(() => {
+    setOtpCountdown((prev) => {
+      if (prev <= 1) {
+        clearInterval(otpTimerRef.current);
+        setOtpSent(false);
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+};
+
+// ------------------ Registration OTP ------------------
+const sendRegistrationOtp = async (email, password) => {
+  try {
+    // Creating Unverified account then Sending OTP
+    const res = await fetch(`${config.API_BASE_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+
+    startOtpCountdown(data.wait_seconds);
+    toast.success(data.message || 'OTP sent to your email');
+    return true;
+  } catch (err) {
+    toast.error(err.message || 'Failed to send OTP');
+    return false;
+  }
+};
+
+// Verifying OTP Then Marking Account as Verified
+const verifyRegistrationOtp = async (email, otp) => {
+  try {
+    const res = await fetch(`${config.API_BASE_URL}/verify-account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'OTP verification failed');
+
+    toast.success(data.message || 'OTP verified');
+    return true;
+  } catch (err) {
+    toast.error(err.message || 'OTP verification failed');
+    return false;
+  }
+};
+
+// ------------------ Resend OTP ------------------
+const resendOtp = async (email = null) => {
+  if (otpCountdown > 0 || resendLoading) {
+    toast.info(`Please wait ${otpCountdown}s before resending OTP`);
+    return false;
+  }
+
+  setResendLoading(true); 
+
+  try {
+    let res;
+
+    // Registration flow (public)
+    if (email) {
+      res = await fetch(`${config.API_BASE_URL}/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-
-      toast.success('Registration successful');
-    } catch (err) {
-      toast.error(err.message || 'Registration failed');
-    } finally {
-      setIsLoading(false);
     }
-  };
+    // Logged-in flows (change password)
+    else {
+      res = await authFetch(`${config.API_BASE_URL}/resend-otp`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+    }
 
-  // ------------------ Change password ------------------
-  const changePassword = async (currentPassword, newPassword) => {
-   setChangePasswordLoading(true);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to resend OTP');
+
+    startOtpCountdown(data.wait_seconds || 60);
+    toast.success(data.message || 'New OTP sent to your email');
+    return true;
+  } catch (err) {
+    toast.error(err.message || 'Failed to resend OTP');
+    return false;
+  } finally {
+    setResendLoading(false); 
+  }
+};
+
+// ------------------ Password Change OTP ------------------
+const sendChangePasswordOtp = async (currentPassword, resend = false) => {
+  if (!user?.email) {
+    toast.error('User not found');
+    return false;
+  }
 
   try {
     const res = await authFetch(`${config.API_BASE_URL}/change-password`, {
       method: 'POST',
-      body: JSON.stringify({
-        current_password: currentPassword,
-        new_password: newPassword,
-      }),
+      body: JSON.stringify({ current_password: currentPassword, resend }),
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to change password');
+    if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
 
-    toast.success('Password changed. Please log in again.');
-    logout(false); 
+    startOtpCountdown(data.wait_seconds || 300);
+    toast.success(data.message || 'OTP sent to your email');
+    return true;
+  } catch (err) {
+    toast.error(err.message || 'Failed to send OTP');
+    return false;
+    
+  }
+};
+
+// ------------------ Complete Password Change ------------------
+const completeChangePassword = async (currentPassword, newPassword, otp) => {
+  if (!user?.email) {
+    toast.error('User not found');
+    return false;
+  }
+
+  try {
+    const res = await authFetch(`${config.API_BASE_URL}/change-password`, {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword, otp }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Password change failed');
+
+    toast.success(data.message || 'Password changed successfully');
+    logout(false); // force re-login
+    return true;
   } catch (err) {
     toast.error(err.message || 'Password change failed');
-  } finally {
-    setChangePasswordLoading(false);
   }
- };
+    finally {
+      setChangePasswordLoading(true);
+    }
+};
 
   // ------------------ Delete account ------------------
   const deleteAccount = async (password) => {
@@ -225,7 +340,7 @@ export const AuthProvider = ({ children }) => {
   } catch (err) {
     toast.error(err.message || 'Account deletion failed');
   } finally {
-    setDeleteAccountLoading(false);
+    setDeleteAccountLoading(true);
   }
  };
 
@@ -247,23 +362,44 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        login,
-        register,
-        logout,
-        changePassword,
-        deleteAccount,
-        changePasswordLoading,
-        deleteAccountLoading,
-        authFetch,
-        isAuthenticated: !!user,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  <AuthContext.Provider
+  value={{
+    // auth state
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+
+    // auth actions
+    login,
+    logout,
+    authFetch,
+
+    // registration OTP
+    sendRegistrationOtp,
+    verifyRegistrationOtp,
+
+    //resend OTP
+    resendOtp,
+
+    // password change OTP
+    sendChangePasswordOtp,
+    completeChangePassword,
+
+    // account management
+    deleteAccount,
+
+    // loading states
+    changePasswordLoading,
+    deleteAccountLoading,
+
+    // OTP UI state
+    otpSent,
+    otpCountdown,
+  }}
+>
+  {children}
+</AuthContext.Provider>
+
   );
 };
 

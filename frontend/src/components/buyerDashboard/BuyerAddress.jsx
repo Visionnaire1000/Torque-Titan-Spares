@@ -86,3 +86,4 @@ const BuyerAddress = () => {
 };
 
 export default BuyerAddress;
+
