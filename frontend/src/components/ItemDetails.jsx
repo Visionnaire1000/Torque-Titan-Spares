@@ -69,23 +69,22 @@ const ItemDetails = () => {
       const itemData = await itemRes.json();
       const reviewData = await reviewsRes.json();
 
-      const reviewsWithUserReaction = reviewData.map((r) => {
-        const userReaction = r.likes?.find(
-          (l) => l.user_id === currentUserId
-        );
-
+      const reviewsWithReaction = reviewData.map((r) => {
+        const userReaction = r.likes?.find((l) => l.user_id === currentUserId);
         return {
           ...r,
-          user_reaction: userReaction
-            ? userReaction.is_like
-              ? "like"
-              : "dislike"
-            : null,
+          user_reaction:
+            userReaction === undefined
+              ? null
+              : userReaction.is_like
+              ? true
+              : false,
+          display_name: r.user_display_name || "User",
         };
       });
 
       setItem(itemData);
-      setReviews(reviewsWithUserReaction);
+      setReviews(reviewsWithReaction);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load item details");
@@ -98,18 +97,12 @@ const ItemDetails = () => {
     fetchItemAndReviews();
   }, [id]);
 
-  const averageRating = item?.average_rating
-    ? Number(item.average_rating)
-    : 0;
-
-  /* ---------- Detect Existing User Review ---------- */
+  const averageRating = item?.average_rating ? Number(item.average_rating) : 0;
   const userReview = reviews.find((r) => r.user_id === currentUserId);
 
   const refreshItem = async () => {
     try {
-      const res = await fetch(
-        `${config.API_BASE_URL}/spareparts/${id}`
-      );
+      const res = await fetch(`${config.API_BASE_URL}/spareparts/${id}`);
       const data = await res.json();
       setItem(data);
     } catch (err) {
@@ -117,22 +110,13 @@ const ItemDetails = () => {
     }
   };
 
-  const handleReviewAction = async ({
-    method,
-    endpoint,
-    body,
-    successMessage,
-    updateFn,
-  }) => {
+  const handleReviewAction = async ({ method, endpoint, body, successMessage, updateFn }) => {
     try {
-      const res = await authFetch(
-        `${config.API_BASE_URL}${endpoint}`,
-        {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: body ? JSON.stringify(body) : undefined,
-        }
-      );
+      const res = await authFetch(`${config.API_BASE_URL}${endpoint}`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -153,9 +137,7 @@ const ItemDetails = () => {
   /* ---------- Review CRUD ---------- */
   const submitReview = () => {
     if (userReview) {
-      toast.info(
-        "You already reviewed this item. You can edit or delete your review."
-      );
+      toast.info("You already reviewed this item. You can edit or delete your review.");
       return;
     }
 
@@ -174,8 +156,7 @@ const ItemDetails = () => {
         comment: trimmedComment || undefined,
       },
       successMessage: "Review added",
-      updateFn: (newReview) =>
-        setReviews([newReview, ...reviews]),
+      updateFn: (newReview) => setReviews([newReview, ...reviews]),
     });
 
     setRating(0);
@@ -211,11 +192,7 @@ const ItemDetails = () => {
       },
       successMessage: "Review updated",
       updateFn: (updatedReview) =>
-        setReviews((prev) =>
-          prev.map((r) =>
-            r.id === reviewId ? updatedReview : r
-          )
-        ),
+        setReviews((prev) => prev.map((r) => (r.id === reviewId ? updatedReview : r))),
     });
 
     cancelEdit();
@@ -226,119 +203,117 @@ const ItemDetails = () => {
       method: "DELETE",
       endpoint: `/reviews/edit/${reviewId}`,
       successMessage: "Review deleted",
-      updateFn: () =>
-        setReviews((prev) =>
-          prev.filter((r) => r.id !== reviewId)
-        ),
+      updateFn: () => setReviews((prev) => prev.filter((r) => r.id !== reviewId)),
     });
 
   /* ---------- Likes / Dislikes ---------- */
-  const reactToReview = (reviewId, isLike, reviewUserId) => {
-    if (reviewUserId === currentUserId)
-      return toast.info("Cannot react to your own review");
+  const reactToReview = async (reviewId, isLike, reviewUserId) => {
+    if (reviewUserId === currentUserId) {
+      toast.info("Cannot react to your own review");
+      return;
+    }
 
     setReviews((prev) =>
       prev.map((r) => {
         if (r.id !== reviewId) return r;
 
-        let likes = Number(r.total_likes || 0);
-        let dislikes = Number(r.total_dislikes || 0);
+        let newUserReaction = r.user_reaction;
+        let newLikes = r.total_likes;
+        let newDislikes = r.total_dislikes;
 
-        // User has already liked
-        if (r.user_reaction === "like") {
+        // Toggle logic
+        if (r.user_reaction === isLike) {
+          newUserReaction = null;
+          if (isLike) newLikes = Math.max(0, r.total_likes - 1);
+          else newDislikes = Math.max(0, r.total_dislikes - 1);
+        } else {
+          newUserReaction = isLike;
           if (isLike) {
-            // Remove like
-            return {
-              ...r,
-              total_likes: Math.max(likes - 1, 0),
-              user_reaction: null,
-            };
+            newLikes = r.user_reaction === false ? r.total_likes + 1 : r.total_likes + 1;
+            newDislikes = r.user_reaction === false ? Math.max(0, r.total_dislikes - 1) : r.total_dislikes;
           } else {
-            // Switch from like to dislike
-            return {
-              ...r,
-              total_likes: Math.max(likes - 1, 0),
-              total_dislikes: dislikes + 1,
-              user_reaction: "dislike",
-            };
+            newDislikes = r.user_reaction === true ? r.total_dislikes + 1 : r.total_dislikes + 1;
+            newLikes = r.user_reaction === true ? Math.max(0, r.total_likes - 1) : r.total_likes;
           }
         }
 
-        // User has already disliked
-        if (r.user_reaction === "dislike") {
-          if (!isLike) {
-            // Remove dislike
-            return {
-              ...r,
-              total_dislikes: Math.max(dislikes - 1, 0),
-              user_reaction: null,
-            };
-          } else {
-            // Switch from dislike to like
-            return {
-              ...r,
-              total_likes: likes + 1,
-              total_dislikes: Math.max(dislikes - 1, 0),
-              user_reaction: "like",
-            };
-          }
-        }
-
-        // User had no reaction yet
         return {
           ...r,
-          total_likes: isLike ? likes + 1 : likes,
-          total_dislikes: !isLike ? dislikes + 1 : dislikes,
-          user_reaction: isLike ? "like" : "dislike",
+          user_reaction: newUserReaction,
+          total_likes: newLikes,
+          total_dislikes: newDislikes,
         };
       })
     );
 
-    handleReviewAction({
-      method: "POST",
-      endpoint: `/reviews/${reviewId}/react`,
-      body: { is_like: isLike },
-    });
+    try {
+      const res = await authFetch(`${config.API_BASE_URL}/reviews/${reviewId}/react`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_like: isLike }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to react");
+      }
+
+      const data = await res.json();
+
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId
+            ? {
+                ...r,
+                total_likes: data.review.total_likes,
+                total_dislikes: data.review.total_dislikes,
+              }
+            : r
+        )
+      );
+    } catch (err) {
+      toast.error(err.message || "Action failed");
+      fetchItemAndReviews();
+    }
   };
 
   if (loading) return <div className="item-details">Loading...</div>;
   if (!item) return <div className="item-details">Item not found</div>;
+
+  // ---------------- Sort Reviews ----------------
+  const sortedReviews = [...reviews].sort((a, b) => {
+    if (a.user_id === currentUserId) return -1;
+    if (b.user_id === currentUserId) return 1;
+    return 0;
+  });
 
   return (
     <div className="item-details">
       {/* ---------- Item Info ---------- */}
       <div className="item-main">
         <img src={item.image} alt={item.brand} />
-
         <div className="item-info">
           <h2>
             {item.brand} {item.category} for {item.vehicle_type}
           </h2>
-
           <p id="price">
             KES {item.buying_price?.toLocaleString() || "0"}
             {item.discount_percentage > 0 && (
-              <span id="discount">
-                (-{item.discount_percentage.toFixed(0)}%)
-              </span>
+              <span id="discount">(-{item.discount_percentage.toFixed(0)}%)</span>
             )}
           </p>
-
           <p id="describe">{item.description}</p>
-
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <StarRating value={averageRating} readonly size={22} />
             <span>
-              {averageRating.toFixed(1)} (
-              {reviews.filter((r) => r.rating != null).length})
+              {averageRating.toFixed(1)} ({reviews.filter((r) => r.rating != null).length})
             </span>
           </div>
-
           <button onClick={() => addItem(item)}>Add To Cart</button>
         </div>
       </div>
 
-      {/* ---------- Add Review (LOCKED) ---------- */}
+      {/* ---------- Add Review ---------- */}
       {!userReview ? (
         <div className="add-review">
           <h3>Add a Review</h3>
@@ -352,85 +327,60 @@ const ItemDetails = () => {
         </div>
       ) : (
         <p className="muted">
-          You already reviewed this item. You can edit or delete your review
-          below.
+          You already reviewed this item. You can edit or delete your review below.
         </p>
       )}
 
-      {/* ---------- Reviews Section(comments) ---------- */}
+      {/* ---------- Reviews Section ---------- */}
       <div className="reviews-section">
-        <h3>
-          Customer Reviews (
-          {reviews.filter((r) => r.comment?.trim()).length})
-        </h3>
-
-        {reviews.map((r) => (
+        <h3>Customer Reviews ({reviews.filter((r) => r.comment?.trim()).length})</h3>
+        {sortedReviews.map((r) => (
           <div key={r.id} className="review-card">
             {editingReviewId === r.id ? (
               <>
-                <StarRating
-                  value={editRating}
-                  onChange={setEditRating}
-                />
+                <StarRating value={editRating} onChange={setEditRating} />
                 <textarea
                   value={editComment}
-                  onChange={(e) =>
-                    setEditComment(e.target.value)
-                  }
+                  onChange={(e) => setEditComment(e.target.value)}
                 />
-                <button onClick={() => saveEdit(r.id)}>
-                  Save
-                </button>
-                <button onClick={cancelEdit}>Cancel</button>
+                <div className="edit-buttons">
+                  <button onClick={() => saveEdit(r.id)}>Save</button>
+                  <button onClick={cancelEdit}>Cancel</button>
+                </div>
               </>
             ) : (
               <>
-                <StarRating
-                  value={r.rating || 0}
-                  readonly
-                  size={20}
-                />
-                {r.comment && (
-                  <p className="comment">{r.comment}</p>
-                )}
+                <div className="review-header">
+                  <span className="review-user">
+                    {r.user_id === currentUserId ? (
+                      <span className="you-badge">You</span>
+                    ) : (
+                      r.display_name
+                    )}
+                  </span>
+                  <span className="review-date">
+                    {new Date(r.created_at).toLocaleDateString("en-GB")}
+                  </span>
+                </div>
+                <StarRating value={r.rating || 0} readonly size={20} />
+                {r.comment && <p className="comment">{r.comment}</p>}
 
                 {r.user_id === currentUserId ? (
-                  <>
-                    <button onClick={() => startEdit(r)}>
-                      Edit
-                    </button>
-                    <button onClick={() => deleteReview(r.id)}>
-                      Delete
-                    </button>
-                  </>
+                  <div className="user-review-buttons">
+                    <button onClick={() => startEdit(r)}>Edit</button>
+                    <button onClick={() => deleteReview(r.id)}>Delete</button>
+                  </div>
                 ) : (
-                  <div style={{ display: "flex", gap: 10 }}>
-                    {/* Like button */}
+                  <div className="review-reactions">
                     <button
-                      onClick={() =>
-                        reactToReview(r.id, true, r.user_id)
-                      }
-                      style={{
-                        fontWeight:
-                          r.user_reaction === "like"
-                            ? "bold"
-                            : "normal",
-                      }}
+                      onClick={() => reactToReview(r.id, true, r.user_id)}
+                      className={r.user_reaction === true ? "active like-btn" : ""}
                     >
                       👍 {r.total_likes || 0}
                     </button>
-
-                    {/* Dislike button */}
                     <button
-                      onClick={() =>
-                        reactToReview(r.id, false, r.user_id)
-                      }
-                      style={{
-                        fontWeight:
-                          r.user_reaction === "dislike"
-                            ? "bold"
-                            : "normal",
-                      }}
+                      onClick={() => reactToReview(r.id, false, r.user_id)}
+                      className={r.user_reaction === false ? "active dislike-btn" : ""}
                     >
                       👎 {r.total_dislikes || 0}
                     </button>

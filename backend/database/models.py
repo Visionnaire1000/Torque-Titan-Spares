@@ -139,9 +139,27 @@ class Users(db.Model, SerializerMixin):
 
         return True
     
-#------------------------------SPARE PARTS MODEL---------------------------------
+     # -------------------------- DISPLAY NAME PROPERTY ----------------------
+    @property
+    def display_name(self):
+        """
+        Returns a friendly name for the user:
+        - Uses first part of email if no first/last name is present
+        - Converts dots to spaces and capitalizes words
+        """
+        if hasattr(self, 'first_name') and hasattr(self, 'last_name') and self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        if self.email:
+            name_part = self.email.split("@")[0]
+            # replace dots/underscores with spaces, capitalize words
+            name_part = name_part.replace(".", " ").replace("_", " ")
+            return " ".join(word.capitalize() for word in name_part.split())
+        return "User"
+    
+# ------------------------------ SPARE PARTS MODEL ---------------------------------
 class SpareParts(db.Model, SerializerMixin):
     __tablename__ = "spareparts"
+
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
     category = db.Column(db.String, nullable=False)
     vehicle_type = db.Column(db.String, nullable=False)
@@ -158,135 +176,159 @@ class SpareParts(db.Model, SerializerMixin):
 
     average_rating = db.Column(db.Float, default=0.0)
     total_reviews = db.Column(db.Integer, default=0)
-    total_likes = db.Column(db.Integer, default=0)
-    total_dislikes = db.Column(db.Integer, default=0)
 
     # -------------------------- RELATIONSHIPS --------------------------------
     order_items = db.relationship("OrderItems", back_populates="sparepart")
-    reviews = db.relationship('Reviews', back_populates='spareparts', cascade='all, delete-orphan')
+    reviews = db.relationship(
+        "Reviews",
+        back_populates="spareparts",
+        cascade="all, delete-orphan"
+    )
 
     # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    "-order_items",                 # stops biggest recursion path
-    "-reviews.spareparts",          # prevent review → sparepart loop
-    "-reviews.users.reviews",       # prevent user → reviews loop
-    "-reviews.likes.reviews",       # extra safety (recommended)
+        "-order_items",
+        "-reviews.spareparts",
+        "-reviews.users.reviews",
+        "-reviews.likes.reviews",
     )
 
-
-    #--------------------------VALIDATIONS-----------------------------------
-    @validates('vehicle_type')
+    # -------------------------- VALIDATIONS ----------------------------------
+    @validates("vehicle_type")
     def validate_vehicle_type(self, key, value):
-        allowed = ['sedan', 'suv', 'bus', 'truck']
+        allowed = ["sedan", "suv", "bus", "truck"]
         if value.lower() not in allowed:
             raise ValueError(f"Vehicle type must be one of: {', '.join(allowed)}")
         return value.lower()
-    
-    #------------------------CUSTOM METHODS-----------------------------------
-        #(calculates discount)
+
+    # ------------------------ CUSTOM METHODS ---------------------------------
+
     def calculate_discount(self):
         if self.marked_price and self.buying_price:
             self.discount_amount = round(self.marked_price - self.buying_price, 2)
-            self.discount_percentage = round((self.discount_amount / self.marked_price) * 100, 2) if self.marked_price > 0 else 0.0
+            self.discount_percentage = (
+                round((self.discount_amount / self.marked_price) * 100, 2)
+                if self.marked_price > 0
+                else 0.0
+            )
         else:
             self.discount_amount = 0.0
             self.discount_percentage = 0.0
 
-    #(updates reviews stats-total likes,dislikes and average ratings)
     def update_review_stats(self):
-   
         reviews = getattr(self, "reviews", []) or []
 
-        # Total reviews
         self.total_reviews = len(reviews)
 
-        # Average rating (only integers 1-5)
-        ratings = [r.rating for r in reviews if isinstance(r.rating, int) and 1 <= r.rating <= 5]
-        self.average_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+        ratings = [
+            r.rating
+            for r in reviews
+            if isinstance(r.rating, int) and 1 <= r.rating <= 5
+        ]
 
-        # Total likes/dislikes
-        total_likes = 0
-        total_dislikes = 0
-        for r in reviews:
-            likes_list = getattr(r, "likes", []) or []
-            for like in likes_list:
-                is_like = getattr(like, "is_like", None)
-                if is_like is True:
-                    total_likes += 1
-                elif is_like is False:
-                    total_dislikes += 1
+        self.average_rating = (
+            round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+        )
 
-        self.total_likes = total_likes
-        self.total_dislikes = total_dislikes
 
-#------------------------------REVIEWS MODEL---------------------------------
+# ------------------------------ REVIEWS MODEL ---------------------------------
 class Reviews(db.Model, SerializerMixin):
-    __tablename__ = 'reviews'
+    __tablename__ = "reviews"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
-    sparepart_id = db.Column(db.String, db.ForeignKey('spareparts.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    sparepart_id = db.Column(db.String, db.ForeignKey("spareparts.id"), nullable=False)
     comment = db.Column(db.String, nullable=True)
     rating = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    #--------------------------RELATIONSHIPS--------------------------------
-    users = db.relationship('Users', back_populates='reviews')
-    spareparts = db.relationship('SpareParts', back_populates='reviews')
-    likes = db.relationship('ReviewReactions', back_populates='reviews', cascade='all, delete-orphan')
+    total_likes = db.Column(db.Integer, default=0)
+    total_dislikes = db.Column(db.Integer, default=0)
 
-    #-------------------------SERIALIZE RULES-------------------------------
+    # -------------------------- RELATIONSHIPS --------------------------------
+    users = db.relationship("Users", back_populates="reviews")
+    spareparts = db.relationship("SpareParts", back_populates="reviews")
+    likes = db.relationship(
+        "ReviewReactions",
+        back_populates="reviews",
+        cascade="all, delete-orphan"
+    )
+
+    # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    '-users.reviews',         # avoids recursion
-    '-spareparts.reviews',    # avoids recursion
-    '-likes.reviews',         # avoids recursion
-    '-likes.users',           # avoid going user -> likes -> review -> user
-   )
+        "-users.reviews",
+        "-spareparts.reviews",
+        "-likes.reviews",
+        "-likes.users",
+    )
 
-    #--------------------------VALIDATIONS-----------------------------------
-    @validates('rating')
+    # -------------------------- VALIDATIONS ----------------------------------
+    @validates("rating")
     def validate_rating(self, key, value):
         if value is not None and not (1 <= value <= 5):
             raise ValueError("Rating must be between 1 and 5")
         return value
-    
-#------------------------------REVIEW REACTIONS MODEL---------------------------------
+
+    # ------------------------ CUSTOM METHODS ---------------------------------
+    def update_reaction_stats(self):
+        reactions = getattr(self, "likes", []) or []
+
+        likes = 0
+        dislikes = 0
+
+        for r in reactions:
+            if r.is_like is True:
+                likes += 1
+            elif r.is_like is False:
+                dislikes += 1
+
+        self.total_likes = likes
+        self.total_dislikes = dislikes
+
+    #----------------------Displaying User Name above Comment-----------------------------
+    @property
+    def user_display_name(self):
+        return self.users.display_name if self.users else "User"
+
+
+# ------------------------------ REVIEW REACTIONS MODEL ---------------------------------
 class ReviewReactions(db.Model, SerializerMixin):
-    __tablename__ = 'review_reactions'
+    __tablename__ = "review_reactions"
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
-    review_id = db.Column(db.String, db.ForeignKey('reviews.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    review_id = db.Column(db.String, db.ForeignKey("reviews.id"), nullable=False)
     is_like = db.Column(db.Boolean, nullable=False)
 
-    #--------------------------RELATIONSHIPS--------------------------------
-    users = db.relationship('Users', back_populates='likes')
-    reviews = db.relationship('Reviews', back_populates='likes')
+    # -------------------------- RELATIONSHIPS --------------------------------
+    users = db.relationship("Users", back_populates="likes")
+    reviews = db.relationship("Reviews", back_populates="likes")
 
-    #-------------------------SERIALIZE RULES-------------------------------
+    # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    '-users.likes',           # avoid recursion
-    '-reviews.likes',         # avoid recursion
-    '-reviews.users',         # lean output
+        "-users.likes",
+        "-reviews.likes",
+        "-reviews.users",
     )
 
-    #--------------------------VALIDATIONS-----------------------------------
-    @validates('is_like')
+    # -------------------------- VALIDATIONS ----------------------------------
+    @validates("is_like")
     def validate_is_like(self, key, value):
-       if isinstance(value, str):
-        if value.lower() in ["true", "1"]:
-            value = True
-        elif value.lower() in ["false", "0"]:
-            value = False
+        # normalize strings
+        if isinstance(value, str):
+            if value.lower() in ["true", "1"]:
+                value = True
+            elif value.lower() in ["false", "0"]:
+                value = False
 
-       # normalize ints
-       if isinstance(value, int):
-           value = bool(value)
+        # normalize ints
+        if isinstance(value, int):
+            value = bool(value)
 
-       if not isinstance(value, bool):
-          raise ValueError("is_like must be True or False")
+        if not isinstance(value, bool):
+            raise ValueError("is_like must be True or False")
 
-       return value
+        return value
   
 #------------------------------ORDERS MODEL---------------------------------
 class Orders(db.Model, SerializerMixin):

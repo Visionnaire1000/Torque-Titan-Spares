@@ -375,7 +375,23 @@ class ReviewsResource(Resource):
         """Get all reviews for a spare part"""
         part = SpareParts.query.get_or_404(part_id)
         reviews = Reviews.query.filter_by(sparepart_id=part.id).order_by(Reviews.id.desc()).all()
-        return [r.to_dict() for r in reviews], 200
+
+        result = []
+        for r in reviews:
+            r_dict = r.to_dict()
+            # Use property to get proper display name
+            r_dict["user_display_name"] = r.user_display_name
+
+            # Include total likes/dislikes
+            r_dict["total_likes"] = sum(1 for l in r.likes if l.is_like)
+            r_dict["total_dislikes"] = sum(1 for l in r.likes if not l.is_like)
+
+            # Include individual reactions for frontend
+            r_dict["likes"] = [{"user_id": l.user_id, "is_like": l.is_like} for l in r.likes]
+
+            result.append(r_dict)
+
+        return result, 200
 
     @jwt_required()
     def post(self, part_id):
@@ -432,8 +448,14 @@ class ReviewsResource(Resource):
             db.session.rollback()
             return {"error": "Failed to save review"}, 500
 
-        return review.to_dict(), 201
+        # Return dict with display name and initial likes/dislikes
+        review_dict = review.to_dict()
+        review_dict["user_display_name"] = review.user_display_name
+        review_dict["total_likes"] = 0
+        review_dict["total_dislikes"] = 0
+        review_dict["likes"] = []
 
+        return review_dict, 201
 
 class ReviewEditResource(Resource):
     @jwt_required()
@@ -507,67 +529,61 @@ class ReviewEditResource(Resource):
 
         return {"message": "Review deleted"}, 200
     
-    
 class ReviewReactionsResource(Resource):
     @jwt_required()
     def post(self, review_id):
         current_user_id = get_jwt_identity()
         review = Reviews.query.get_or_404(review_id)
 
+        # cannot react to own review
         if review.user_id == current_user_id:
             return {"error": "Cannot react to your own review"}, 400
 
         data = request.get_json() or {}
-        raw = data.get("is_like")
+        if "is_like" not in data:
+            return {"error": "is_like is required"}, 400
 
-        # normalize input to Python boolean
-        if isinstance(raw, bool):
-            is_like = raw
-        elif isinstance(raw, str):
-            if raw.lower() in ["true", "1"]:
-                is_like = True
-            elif raw.lower() in ["false", "0"]:
-                is_like = False
-            else:
-                return {"error": "is_like must be true or false"}, 400
-        elif isinstance(raw, int):
-            is_like = bool(raw)
-        else:
-            return {"error": "is_like must be true or false"}, 400
+        is_like = bool(data.get("is_like"))
 
-        # fetch existing reaction
         existing = ReviewReactions.query.filter_by(
             user_id=current_user_id,
             review_id=review.id
         ).first()
 
+        action = "added"
+
         if existing:
-            existing.is_like = is_like  
+            # TOGGLE OFF
+            if existing.is_like == is_like:
+                db.session.delete(existing)
+                action = "removed"
+            else:
+                # SWITCH reaction
+                existing.is_like = is_like
+                action = "switched"
         else:
-            existing = ReviewReactions(
+            new_reaction = ReviewReactions(
                 user_id=current_user_id,
                 review_id=review.id,
-                is_like=is_like
+                is_like=is_like,
             )
-            db.session.add(existing)
+            db.session.add(new_reaction)
 
-        try:
-            # update stats based on reactions
-            review.spareparts.update_review_stats()
-            db.session.commit()
+        # update counters
+        review.update_reaction_stats()
+        review.spareparts.update_review_stats()
 
-            return {
-                "review": {
-                    "id": review.id,
-                    "total_likes": review.total_likes,
-                    "total_dislikes": review.total_dislikes
-                }
-            }, 200
+        db.session.commit()
 
-        except Exception as e:
-            db.session.rollback()
-            return {"error": str(e)}, 400
-
+        return {
+            "action": action,
+            "review": {
+                "id": review.id,
+                "total_likes": review.total_likes,
+                "total_dislikes": review.total_dislikes,
+            },
+        }, 200
+    
 # ------------------ Orders ------------------
 class OrdersResource(Resource):
     @jwt_required()

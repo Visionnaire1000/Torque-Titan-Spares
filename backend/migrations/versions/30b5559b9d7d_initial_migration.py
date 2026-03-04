@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 21879f70e6f6
+Revision ID: 30b5559b9d7d
 Revises: 
-Create Date: 2026-02-15 17:18:41.043508
+Create Date: 2026-03-04 03:13:06.016990
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '21879f70e6f6'
+revision = '30b5559b9d7d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,8 +32,6 @@ def upgrade():
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('average_rating', sa.Float(), nullable=True),
     sa.Column('total_reviews', sa.Integer(), nullable=True),
-    sa.Column('total_likes', sa.Integer(), nullable=True),
-    sa.Column('total_dislikes', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -72,6 +70,8 @@ def upgrade():
     sa.Column('comment', sa.String(), nullable=True),
     sa.Column('rating', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('total_likes', sa.Integer(), nullable=True),
+    sa.Column('total_dislikes', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['sparepart_id'], ['spareparts.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
