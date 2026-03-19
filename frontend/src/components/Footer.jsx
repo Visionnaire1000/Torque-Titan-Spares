@@ -15,7 +15,7 @@ const Footer = () => {
           </div>
           <div className='contacts'>
             <h5>Contact</h5>
-            <li>Email: torquetitanspares@gmail.com</li>
+            <li>Email: customerservice@torquetitanspares.com</li>
             <li>Phone: +254 123 458399</li>
           </div>
           <div className='policies'>

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import "../../styles/accountManagement.css";
+import { useAuth } from "../../../contexts/AuthContext";
+import { Link } from "react-router-dom";
+import "../../../styles/admin/superAdminAccount.css";
 
-const AccountManagement = () => {
+const SuperAdminAccount = () => {
   const {
     user,
     sendChangePasswordOtp,
@@ -17,11 +18,8 @@ const AccountManagement = () => {
     deleteAccountLoading,
   } = useAuth();
 
-  // toggling visibility
+  // ------------------ Password states ------------------
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showDeletePassword, setShowDeletePassword] = useState(false);
-
-  // ------------------ Change password state ------------------
   const [step, setStep] = useState(1);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,20 +28,21 @@ const AccountManagement = () => {
   const [passwordError, setPasswordError] = useState("");
   const [passwordFocused, setPasswordFocused] = useState(false);
 
-  // ------------------ Delete account state ------------------
+  // ------------------ Delete account ------------------
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
 
-  // ------------------ Single regex validation ------------------
+  // ------------------ Validation ------------------
   const passwordPattern =
     /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const allRequirementsMet = passwordPattern.test(newPassword);
 
   const requirementMessage =
-    "Password must be at least 8 characters and include one uppercase letter, one number, and one special character.";
+    "Password must be at least 8 characters and include uppercase, number, and special character.";
 
-  // ------------------ Request OTP ------------------
+  // ------------------ Handlers ------------------
   const handleRequestOtp = async (e) => {
     e.preventDefault();
 
@@ -58,16 +57,20 @@ const AccountManagement = () => {
     }
 
     setPasswordError("");
+
     const success = await sendChangePasswordOtp(currentPassword);
     if (success) setStep(2);
   };
 
-  // ------------------ Verify OTP & Change Password ------------------
   const handleCompleteChangePassword = async (e) => {
     e.preventDefault();
     if (!otp) return;
 
-    const success = await completeChangePassword(currentPassword, newPassword, otp);
+    const success = await completeChangePassword(
+      currentPassword,
+      newPassword,
+      otp
+    );
 
     if (success) {
       setCurrentPassword("");
@@ -78,12 +81,6 @@ const AccountManagement = () => {
     }
   };
 
-  // ------------------ Resend OTP ------------------
-  const handleResendOtp = async () => {
-    await resendOtp();
-  };
-
-  // ------------------ Delete account ------------------
   const handleDeleteAccount = () => {
     if (!deletePassword) return;
     deleteAccount(deletePassword);
@@ -93,12 +90,14 @@ const AccountManagement = () => {
     <div className="account-management">
       <h2>Hello {user.display_name}</h2>
 
-      {/* ================= Change Password ================= */}
+      {/* ------------------ Password --------------------- */}
       <section>
         <h3>Change Password</h3>
 
         <form
-          onSubmit={step === 1 ? handleRequestOtp : handleCompleteChangePassword}
+          onSubmit={
+            step === 1 ? handleRequestOtp : handleCompleteChangePassword
+          }
         >
           {step === 1 && (
             <>
@@ -140,7 +139,8 @@ const AccountManagement = () => {
 
           {step === 2 && (
             <>
-              <p>Enter the OTP sent to your email</p>
+              <p>Enter OTP sent to your email</p>
+
               <input
                 type="text"
                 placeholder="OTP"
@@ -151,18 +151,18 @@ const AccountManagement = () => {
 
               <div className="otp-info">
                 {otpSent && otpCountdown > 0 && (
-                  <span>Resend OTP in {otpCountdown}s</span>
+                  <span>Resend in {otpCountdown}s</span>
                 )}
 
                 <button
                   type="button"
-                  onClick={handleResendOtp}
+                  onClick={resendOtp}
                   disabled={otpCountdown > 0 || resendLoading}
                 >
-                   {resendLoading
+                  {resendLoading
                     ? "Resending..."
                     : otpCountdown > 0
-                    ? `Resend in ${otpCountdown}s`
+                    ? `Wait ${otpCountdown}s`
                     : "Resend OTP"}
                 </button>
               </div>
@@ -174,14 +174,12 @@ const AccountManagement = () => {
             onClick={() => setShowChangePassword((p) => !p)}
             className="toggle-password"
           >
-            {showChangePassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showChangePassword ? <EyeOff /> : <Eye />}
           </button>
 
           <button type="submit" disabled={changePasswordLoading}>
             {changePasswordLoading
-              ? step === 1
-                ? "Sending OTP..."
-                : "Verifying OTP..."
+              ? "Processing..."
               : step === 1
               ? "Change Password"
               : "Verify OTP"}
@@ -191,17 +189,20 @@ const AccountManagement = () => {
         </form>
       </section>
 
-      {/* ================= Delete Account ================= */}
+      {/* ----------------------Delete ---------------------------- */}
       <section className="danger-zone">
         <h3>Danger Zone</h3>
 
         {!showDeleteConfirm ? (
-          <button className="danger" onClick={() => setShowDeleteConfirm(true)}>
+          <button
+            className="danger"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
             Delete Account
           </button>
         ) : (
           <div className="delete-confirm">
-            <p>This action is permanent. Enter your password to continue.</p>
+            <p>This action is permanent.</p>
 
             <input
               type={showDeletePassword ? "text" : "password"}
@@ -215,7 +216,7 @@ const AccountManagement = () => {
               onClick={() => setShowDeletePassword((p) => !p)}
               className="toggle-btn"
             >
-              {showDeletePassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showDeletePassword ? <EyeOff /> : <Eye />}
             </button>
 
             <div className="actions">
@@ -224,7 +225,7 @@ const AccountManagement = () => {
                 onClick={handleDeleteAccount}
                 disabled={deleteAccountLoading}
               >
-                {deleteAccountLoading ? "Deleting Account..." : "Delete Account"}
+                Delete
               </button>
 
               <button
@@ -239,8 +240,19 @@ const AccountManagement = () => {
           </div>
         )}
       </section>
+
+      {/* ----------------------Link to Admin Management------------------- */}
+      {user?.role === "super_admin" && (
+        <section className="superadmin-zone">
+          <h3>Admin Management</h3>
+
+          <Link to="/admin-management" className="manage-admin-link">
+            Manage Admin Accounts →
+          </Link>
+        </section>
+      )}
     </div>
   );
 };
 
-export default AccountManagement;
+export default SuperAdminAccount;

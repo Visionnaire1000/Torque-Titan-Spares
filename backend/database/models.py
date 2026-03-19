@@ -336,10 +336,14 @@ class Orders(db.Model, SerializerMixin):
 
     id = db.Column(db.String, primary_key=True, default=generate_uuid)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
-    status = db.Column(db.String)
+    status = db.Column(db.String, default="pending")
     paid = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     total_price = db.Column(db.Float, default=0.0)
+
+    # Timestamp fields for shipping and delivery
+    shipped_at = db.Column(db.DateTime, nullable=True)
+    delivered_at = db.Column(db.DateTime, nullable=True)
 
     # Address fields
     street = db.Column(db.String, nullable=False)
@@ -347,7 +351,7 @@ class Orders(db.Model, SerializerMixin):
     postal_code = db.Column(db.String, nullable=True)
     country = db.Column(db.String, nullable=False)
 
-    # -------------------------- RELATIONSHIPS --------------------------------
+    # Relationships
     users = db.relationship("Users", back_populates="orders")
     order_items = db.relationship(
         "OrderItems",
@@ -355,17 +359,14 @@ class Orders(db.Model, SerializerMixin):
         cascade="all, delete-orphan"
     )
 
-    # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    "-users",                         # never serialize user object
-    "-order_items.order",             # stop order -> items -> order loop
-    "-order_items.sparepart.order_items",  # stop sparepart -> order_items loop
-    "-order_items.sparepart.reviews",      #  avoid heavy payloads
-    "-order_items.sparepart.reviews.users",    
-   )
-    
-    #-------------------------CUSTOM METHOD---------------------------------
-        #(calculates total-price of order items)
+        "-users",
+        "-order_items.order",
+        "-order_items.sparepart.order_items",
+        "-order_items.sparepart.reviews",
+        "-order_items.sparepart.reviews.users",
+    )
+
     def calculate_total(self):
         self.total_price = round(sum(item.subtotal for item in self.order_items), 2)
 

@@ -45,7 +45,12 @@ import SedanFilters from "./components/categories/SedanFilters";
 import SUVFilters from "./components/categories/SUVFilters";
 import TruckFilters from "./components/categories/TruckFilters";
 import BusFilters from "./components/categories/BusFilters"; 
- 
+
+//pages(admin/super_admin)
+import AdminOrders from "./components/admin/AdminOrders";
+import SuperAdminAccount from "./components/admin/adminDashboard/SuperAdminAccount";
+import AdminManagement from "./components/admin/adminDashboard/AdminManagement";
+
 
 function App() {
   return (
@@ -61,8 +66,24 @@ function App() {
               <Route 
                   path="/account-management" 
                   element={
-                     <RoleProtectedRoutes allowedRoles={['buyer']}>
+                     <RoleProtectedRoutes allowedRoles={['buyer','admin','super_admin']}>
                         <AccountManagement />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/super-admin-account" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['super_admin']}>
+                        <SuperAdminAccount />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/admin-management"
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['super_admin']}>
+                        <AdminManagement />
                     </RoleProtectedRoutes>
                   } 
               />
@@ -71,6 +92,14 @@ function App() {
                   element={
                      <RoleProtectedRoutes allowedRoles={['buyer']}>
                         <BuyerOrders />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/admin-orders" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['admin','super_admin']}>
+                        <AdminOrders />
                     </RoleProtectedRoutes>
                   } 
               />

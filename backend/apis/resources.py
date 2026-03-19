@@ -137,7 +137,8 @@ class Login(Resource):
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "role": user.role
+            "role": user.role,
+            "display_name": user.display_name
         }, 200
     
 
@@ -151,7 +152,7 @@ class TokenRefresh(Resource):
             expires_delta=timedelta(minutes=15)
         )
         return {"access_token": new_access_token}, 200
-
+    
 class ChangePassword(Resource):
     @jwt_required()
     def post(self):
@@ -248,24 +249,6 @@ class DeleteAccount(Resource):
             print("Delete error:", e)
             return {"error": "Internal server error"}, 500
 
-
-class CreateAdmin(Resource):
-    @jwt_required()
-    def post(self):
-        current_user = Users.query.get(get_jwt_identity())
-        if current_user.role != 'admin':
-            return {"error": "Only admins can create other admins"}, 403
-
-        data = request.get_json()
-        email, password = data.get('email'), data.get('password')
-        if Users.query.filter_by(email=email).first():
-            return {"error": "Email already exists"}, 409
-
-        admin_user = Users(email=email, role='admin')
-        admin_user.set_password(password)
-        db.session.add(admin_user)
-        db.session.commit()
-        return {"message": "Admin account created"}, 201
 
 # ------------------ Spare Parts ------------------
 class SparePartsList(Resource):
@@ -383,8 +366,8 @@ class ReviewsResource(Resource):
             r_dict["user_display_name"] = r.user_display_name
 
             # Include total likes/dislikes
-            r_dict["total_likes"] = sum(1 for l in r.likes if l.is_like)
-            r_dict["total_dislikes"] = sum(1 for l in r.likes if not l.is_like)
+            r_dict["total_likes"] = r.total_likes
+            r_dict["total_dislikes"] = r.total_dislikes
 
             # Include individual reactions for frontend
             r_dict["likes"] = [{"user_id": l.user_id, "is_like": l.is_like} for l in r.likes]
@@ -649,39 +632,4 @@ class OrdersResource(Resource):
         order.status = new_status
         db.session.commit()
         return {"message": f"Order {order_id} status updated to {new_status}"}, 200
- 
-
-class AdminOrders(Resource):
-    #View all orders (admin only).
-    @jwt_required()
-    def get(self):
-        current_user = Users.query.get(get_jwt_identity())
-        if current_user.role != 'admin':
-            return {"error": "Admins only"}, 403
-
-        orders = Orders.query.all()
-        return [o.to_dict() for o in orders], 200
-
-    @jwt_required()
-    def patch(self, order_id):
-        #Admin can update any order status from pending to delivered
-        current_user = Users.query.get(get_jwt_identity())
-        if current_user.role != 'admin':
-            return {"error": "Admins only"}, 403
-
-        order = Orders.query.get_or_404(order_id)
-        data = request.get_json()
-        new_status = data.get("status")
-
-        if not new_status:
-            return {"error": "Missing status field"}, 400
-
-        # allowed transitions for admin
-        allowed_statuses = ["pending", "cancelled","shipped","delivered"]
-        if new_status not in allowed_statuses:
-            return {"error": f"Invalid status. Allowed: {allowed_statuses}"}, 400
-
-        order.status = new_status
-        db.session.commit()
-
-        return {"message": f"Order {order.id} status updated to {new_status}"}, 200
+  

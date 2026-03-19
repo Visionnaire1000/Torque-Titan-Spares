@@ -14,26 +14,27 @@ export const AuthProvider = ({ children }) => {
 
   const refreshTimer = useRef(null);
 
-  // ------------------ Load saved user ------------------
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('titanUser');
-      if (stored) {
-        const parsed = JSON.parse(stored);
+// ------------------ Load saved user ------------------
+ useEffect(() => {
+  try {
+    const stored = localStorage.getItem('titanUser');
+    if (stored) {
+      const parsed = JSON.parse(stored);
 
-        if (parsed.role === 'admin' || parsed.role === 'buyer') {
-          setUser(parsed);
-        } else {
-          localStorage.removeItem('titanUser');
-        }
+      // saves buyer,admin and super_admin in localstorage
+      if (['admin', 'buyer', 'super_admin'].includes(parsed.role)) {
+        setUser(parsed);
+      } else {
+        localStorage.removeItem('titanUser');
       }
-    } catch (err) {
-      console.error('[AuthProvider] localStorage error:', err);
-      localStorage.removeItem('titanUser');
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  } catch (err) {
+    console.error('[AuthProvider] localStorage error:', err);
+    localStorage.removeItem('titanUser');
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
 
   // ------------------ Token expiry check ------------------
   const isTokenExpired = (token) => {
@@ -145,6 +146,7 @@ export const AuthProvider = ({ children }) => {
         id: decoded.sub,
         email,
         role: data.role,
+        display_name: data.display_name,
         token: data.access_token,
         refreshToken: data.refresh_token,
       };
@@ -391,6 +393,7 @@ const completeChangePassword = async (currentPassword, newPassword, otp) => {
     // loading states
     changePasswordLoading,
     deleteAccountLoading,
+    resendLoading, 
 
     // OTP UI state
     otpSent,
