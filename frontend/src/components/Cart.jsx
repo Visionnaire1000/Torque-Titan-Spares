@@ -101,15 +101,29 @@ const Cart = () => {
           <div className="cart-actions">
             <button
               onClick={() => {
-                if (window.confirm('Are you sure you want to clear your cart?')) {
-                  clearCart?.();
-                }
+              const toastId = toast.warn(
+         <div className="toast-cart-confirm">
+              Are you sure you want to clear your cart?
+          <div style={{ marginTop: "12px" }}>
+            <button
+              onClick={() => {
+                toast.dismiss(toastId);
+                clearCart?.();
               }}
-              className="clear-cart-btn"
             >
-              Clear Cart
+              Yes
             </button>
+            <button onClick={() => toast.dismiss(toastId)}>No</button>
           </div>
+        </div>,
+        { autoClose: false, closeOnClick: false, closeButton: false }
+      );
+    }}
+    className="clear-cart-btn"
+    >
+     Clear Cart
+   </button>
+</div>
         </div>
 
         <div className="order-summary">

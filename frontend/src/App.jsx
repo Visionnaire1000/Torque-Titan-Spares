@@ -50,6 +50,7 @@ import BusFilters from "./components/categories/BusFilters";
 import AdminOrders from "./components/admin/AdminOrders";
 import SuperAdminAccount from "./components/admin/adminDashboard/SuperAdminAccount";
 import AdminManagement from "./components/admin/adminDashboard/AdminManagement";
+import Reviews from "./components/admin/adminDashboard/Reviews";
 
 
 function App() {
@@ -100,6 +101,14 @@ function App() {
                   element={
                      <RoleProtectedRoutes allowedRoles={['admin','super_admin']}>
                         <AdminOrders />
+                    </RoleProtectedRoutes>
+                  } 
+              />
+              <Route 
+                  path="/reviews" 
+                  element={
+                     <RoleProtectedRoutes allowedRoles={['admin','super_admin']}>
+                        <Reviews />
                     </RoleProtectedRoutes>
                   } 
               />

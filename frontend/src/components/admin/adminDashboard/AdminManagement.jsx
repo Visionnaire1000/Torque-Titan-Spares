@@ -12,12 +12,15 @@ const AdminManagement = () => {
   const [admins, setAdmins] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState(""); 
   const [showPassword, setShowPassword] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(false);
   const [deleteloading, setDeleteLoading] = useState(false);
 
-  // Stable fetchAdmins function
+  //Email regex
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const fetchAdmins = useCallback(async () => {
     try {
       const res = await authFetch(`${config.API_BASE_URL}/admin/admins`);
@@ -29,16 +32,18 @@ const AdminManagement = () => {
     }
   }, [authFetch]);
 
-  // Fetch admins once on mount if super_admin
   useEffect(() => {
     if (user?.role === "super_admin") {
       fetchAdmins();
     }
   }, [user, fetchAdmins]);
 
-  // Create admin
+  //Create admin with validation
   const createAdmin = async (e) => {
     e.preventDefault();
+
+    if (emailError) return; //blocks invalid email
+
     setLoading(true);
 
     try {
@@ -53,6 +58,7 @@ const AdminManagement = () => {
 
       setEmail("");
       setPassword("");
+      setEmailError("");
       toast.success("Admin created successfully!");
       fetchAdmins();
     } catch (err) {
@@ -102,9 +108,23 @@ const AdminManagement = () => {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setEmail(value);
+
+              //Validate email
+              setEmailError(
+                !emailPattern.test(value) ? "Enter a valid email address" : ""
+              );
+            }}
             required
           />
+
+          {/*Email error */}
+          {emailError && (
+            <p className="password-error">{emailError}</p>
+          )}
+
           <div className="password-field">
             <input
               type={showPassword ? "text" : "password"}
@@ -120,7 +140,11 @@ const AdminManagement = () => {
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
-          <button type="submit" disabled={loading}>
+
+          <button
+            type="submit"
+            disabled={loading || emailError} 
+          >
             {loading ? "Creating..." : "Create"}
           </button>
         </form>

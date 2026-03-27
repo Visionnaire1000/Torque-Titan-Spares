@@ -239,5 +239,15 @@
   background-color: rgb(145, 7, 7);
 }
 
+.review {
+  margin-left: 14px;
+  margin-bottom: 10px;
+}
 
-
+.admin-star {
+  margin-left: 12px;
+}
+.review-user{
+  margin-left: 12px;
+  color: rgb(0,64,128);
+}

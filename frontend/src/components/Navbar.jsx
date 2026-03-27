@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/AuthContext";
-import UserNavbar from "./buyerDashboard/UserNavbar";
+import BuyerNavbar from "./buyerDashboard/BuyerNavbar";
 import AdminNavbar from "./admin/adminDashboard/AdminNavbar";
 import SuperAdminNavbar from "./admin/adminDashboard/SuperAdminNavbar";
 
@@ -10,7 +10,7 @@ const Navbar = () => {
 
   if (user?.role === "admin") return <AdminNavbar />;
 
-  return <UserNavbar />;
+  return <BuyerNavbar />;
 };
 
 export default Navbar;

@@ -4,9 +4,9 @@ import { ShoppingCart, Menu } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Home, User, Package, MapPin } from "lucide-react";
-import '../../styles/navbar.css';
+import '../../styles/buyerNavbar.css';
 
-const Navbar = () => {
+const BuyerNavbar = () => {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -118,4 +118,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default BuyerNavbar;

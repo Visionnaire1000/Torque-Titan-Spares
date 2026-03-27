@@ -146,3 +146,52 @@ html, body {
 .dropdown-menu button:hover {
   background: #fee2e2;
 }
+
+/* ---------- Notification Badges ---------- */
+.icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #e03e2d; 
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 1px white;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/*slight bounce on update */
+.notification-badge.animate {
+  transform: scale(1.2);
+  opacity: 0.9;
+}
+
+/* Adjust for big numbers */
+.notification-badge::after {
+  content: attr(data-count);
+}
+
+/* ---------- Tabs Badges ---------- */
+.orders-tabs .notification-badge {
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  font-size: 10px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+}

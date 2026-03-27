@@ -6,9 +6,9 @@ import '../styles/register.css';
 
 const Register = () => {
   const {
-    sendRegistrationOtp,    // send OTP for registration
-    verifyRegistrationOtp,  // verify OTP
-    resendOtp,              // resend OTP
+    sendRegistrationOtp,
+    verifyRegistrationOtp,
+    resendOtp,
     otpSent,
     otpCountdown,
     resendLoading,
@@ -16,36 +16,52 @@ const Register = () => {
 
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1); // 1: email/password, 2: OTP
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     otp: '',
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [emailError, setEmailError] = useState(''); 
   const [isLoading, setIsLoading] = useState(false);
+
+  // Email regex
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // ------------------ Handle input ------------------
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value } = e.target;
 
-  if (name === 'password') {
-    const pattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    setPasswordError(
-      !pattern.test(value)
-        ? 'Password must be at least 8 characters and include one uppercase letter, one number, and one special character.'
-        : ''
-    );
-  }
-};
+    // Email validation
+    if (name === 'email') {
+      setEmailError(
+        !emailPattern.test(value) ? 'Enter a valid email address' : ''
+      );
+    }
+
+    // Password validation
+    if (name === 'password') {
+      const pattern =
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+      setPasswordError(
+        !pattern.test(value)
+          ? 'Password must be at least 8 characters and include one uppercase letter, one number, and one special character.'
+          : ''
+      );
+    }
+  };
 
   // ------------------ Step 1: Send OTP ------------------
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (passwordError) return;
+
+    if (passwordError || emailError) return; // ✅ block if invalid
 
     setIsLoading(true);
     const success = await sendRegistrationOtp(formData.email, formData.password);
@@ -66,9 +82,8 @@ const Register = () => {
     if (success) navigate('/login');
   };
 
-  // ------------------ Resend OTP ------------------
   const handleResendOtp = async () => {
-    if (!formData.email) return; 
+    if (!formData.email) return;
     await resendOtp(formData.email);
   };
 
@@ -77,7 +92,7 @@ const Register = () => {
       <div className="register-card">
         <h2>Create Account</h2>
 
-        {/* Step 1: Email & Password */}
+        {/* Step 1 */}
         {step === 1 && (
           <form className="register-form" onSubmit={handleSendOtp}>
             <input
@@ -89,6 +104,11 @@ const Register = () => {
               required
             />
 
+            {/* Email error */}
+            {emailError && (
+              <p className="password-error">{emailError}</p>
+            )}
+
             <div className="input-wrapper">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -97,31 +117,30 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                aria-describedby="password-help"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="toggle-password"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
 
             {passwordError && (
-              <p id="password-help" className="password-error">
-                {passwordError}
-              </p>
+              <p className="password-error">{passwordError}</p>
             )}
 
-            <button type="submit" disabled={isLoading || passwordError}>
+            <button
+              type="submit"
+              disabled={isLoading || passwordError || emailError} 
+            >
               {isLoading ? 'Sending OTP...' : 'Register'}
             </button>
           </form>
         )}
 
-        {/* Step 2: OTP Verification */}
+        {/* Step 2 */}
         {step === 2 && (
           <form className="register-form" onSubmit={handleVerifyOtp}>
             <p>
@@ -141,17 +160,18 @@ const Register = () => {
               {otpSent && otpCountdown > 0 && (
                 <span>Resend OTP in {otpCountdown}s</span>
               )}
-               <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={otpCountdown > 0 || resendLoading}
-                >
-                   {resendLoading
-                    ? "Resending..."
-                    : otpCountdown > 0
-                    ? `Resend in ${otpCountdown}s`
-                    : "Resend OTP"}
-                </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={otpCountdown > 0 || resendLoading}
+              >
+                {resendLoading
+                  ? "Resending..."
+                  : otpCountdown > 0
+                  ? `Resend in ${otpCountdown}s`
+                  : "Resend OTP"}
+              </button>
             </div>
 
             <button type="submit" disabled={isLoading || !formData.otp}>
