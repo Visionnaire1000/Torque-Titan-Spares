@@ -8,15 +8,31 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.message{
-  margin-top: 40px;
-  color: green;
+.loading{
+  margin-top: 100px;
+  color: red;
+  font-family: Arial, Helvetica, sans-serif;
 }
+
 h2 {
   margin: 20px 0;
   color: red;
   font-size: 1.8rem;
-  margin-top: 40px;
+  margin-top: 20px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.fire-icon {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: medium;
+  margin-right: 6px;
+  animation: pulse 1s infinite;
 }
 
 /* ---------- Carousel ---------- */
@@ -66,7 +82,7 @@ h2 {
   color: #333;
 }
 
-.item-card p {
+#price{
   font-weight: bold;
   font-size: large;
   color: red;
@@ -74,8 +90,8 @@ h2 {
 }
 
 .discount {
-  color: #d9534f;
-  font-weight: normal;
+  color: #e41a139b;
+  font-size: small;
   margin-left: 5px;
 }
 
@@ -108,6 +124,86 @@ h2 {
 .homepage .no-items {
   text-align: center;
   font-size: 1.2rem;
-  color: #555;
-  margin: 50px 0;
+  color: red;
+  margin-top: 80px;
 }
+
+/* Skeleton card container */
+.item-card.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f0f0f0a7; /* base card color */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+/* Entire card shimmer */
+.item-card.skeleton {
+  display: flex;
+  flex-direction: column;
+  background: #f3f3f3;
+  border-radius: 12px;
+  padding: 12px;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Overlay shimmer for the whole card */
+.item-card.skeleton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.4) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+  z-index: 1;
+}
+
+/* Keep inner skeleton elements so card structure looks right */
+.skeleton-image,
+.skeleton-text,
+.skeleton-button {
+  position: relative;
+  z-index: 2; /* appear above the shimmer */
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+}
+
+.retry-btn {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: #ff4d4f;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.retry-btn:hover {
+  background: #d9363e;
+}
+

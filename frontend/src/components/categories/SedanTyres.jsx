@@ -1,8 +1,35 @@
 import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
+import { RefreshCw } from "lucide-react";
 import config from '../../config';
 import "../../styles/tyres.css";
+
+/* ---------------- Skeleton Card ---------------- */
+const SkeletonCard = () => (
+  <div className="item-card skeleton">
+    <div className="skeleton-image product-img" />
+    <div className="skeleton-text w-80" />
+    <div className="skeleton-text w-60" />
+    <div className="skeleton-text w-40" />
+    <div className="skeleton-btn" />
+  </div>
+);
+
+/* ---------------- Error UI ---------------- */
+const ErrorState = ({ onRetry }) => (
+  <div className="error-state">
+    <h2>Something went wrong</h2>
+    <p>
+      Unable to load spare parts. Please check your connection and try again.
+    </p>
+
+    <button className="retry-btn" onClick={onRetry}>
+      <RefreshCw size={18} className="retry-icon" />
+      Retry
+    </button>
+  </div>
+);
 
 const SedanTyres = () => {
   const [items, setItems] = useState([]);
@@ -10,7 +37,8 @@ const SedanTyres = () => {
   const [price, setPrice] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false); // <-- loading state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false); 
 
   const { addItem } = useCart();
 
@@ -20,7 +48,9 @@ const SedanTyres = () => {
   ];
 
   const fetchTyres = async () => {
-    setLoading(true); // start loading
+    setLoading(true);
+    setError(false); 
+
     const params = new URLSearchParams({
       category: 'tyre',
       vehicle_type: 'sedan',
@@ -32,16 +62,17 @@ const SedanTyres = () => {
 
     try {
       const res = await fetch(`${config.API_BASE_URL}/spareparts?${params}`);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error("Failed");
 
       const data = await res.json();
       setItems(data.items || []);
       setTotalPages(data.pages || 1);
     } catch (err) {
       console.error(err);
-      setItems([]); // clear items on error
+      setItems([]);
+      setError(true); 
     } finally {
-      setLoading(false); // end loading
+      setLoading(false);
     }
   };
 
@@ -74,83 +105,104 @@ const SedanTyres = () => {
 
   return (
     <div className="products-page">
-      <div className="filters">
-        <select value={brand} onChange={e => setBrand(e.target.value)}>
-          <option value="">All Brands</option>
-          {availableBrands.map(b => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
 
-        <select value={price} onChange={e => setPrice(e.target.value)}>
-          <option value="">All Prices</option>
-          <option value="low">Low (&lt; 15k)</option>
-          <option value="medium">Medium (15k–30k)</option>
-          <option value="high">High (&gt; 30k)</option>
-        </select>
-      </div>
+      {/* -------- Filters -------- */}
+      {!error && (
+        <div className="filters">
+          <select value={brand} onChange={e => setBrand(e.target.value)}>
+            <option value="">All Brands</option>
+            {availableBrands.map(b => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
 
-      <div className="products-grid">
-        {loading ? (
-          <p>Loading sedan tyres...</p>
-        ) : items.length ? (
-          items.map(item => (
-            <div key={item.id} className="item-card">
-              <Link to={`/items/${item.id}`} className="item-card-link">
-                <img src={item.image} alt={item.brand} />
-                <h4>{item.brand} {item.category} for {item.vehicle_type}</h4>
-                <p id="price">
-                  KES {item.buying_price?.toLocaleString()}
-                  {item.discount_percentage > 0 && (
-                    <span className="discount">
-                      (-{item.discount_percentage.toFixed(0)}%)
-                    </span>
-                  )}
-                </p>
-                <button
-                  className="add-to-cart"
-                  onClick={(e) => handleAddToCart(item, e)}
-                >
-                  Add To Cart
-                </button>
-              </Link>
-            </div>
-          ))
-        ) : (
-          <p>No sedan tyres found.</p>
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-          >
-            Prev
-          </button>
-
-          {getVisiblePages()[0] > 1 && <span className="dots">…</span>}
-
-          {getVisiblePages().map(page => (
-            <button
-              key={page}
-              className={page === currentPage ? 'active' : ''}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </button>
-          ))}
-
-          {getVisiblePages().slice(-1)[0] < totalPages && <span className="dots">…</span>}
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-          >
-            Next
-          </button>
+          <select value={price} onChange={e => setPrice(e.target.value)}>
+            <option value="">All Prices</option>
+            <option value="low">Low (&lt; 15k)</option>
+            <option value="medium">Medium (15k–30k)</option>
+            <option value="high">High (&gt; 30k)</option>
+          </select>
         </div>
+      )}
+
+      {/* -------- Error State -------- */}
+      {error ? (
+        <ErrorState onRetry={fetchTyres} />
+      ) : (
+        <>
+          {/* -------- Products Grid -------- */}
+          <div className="products-grid">
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))
+            ) : items.length ? (
+              items.map(item => (
+                <div key={item.id} className="item-card">
+                  <Link to={`/items/${item.id}`} className="item-card-link">
+                    <img src={item.image} alt={item.brand} />
+                    <h4>{item.brand} {item.category} for {item.vehicle_type}</h4>
+                    <p id="price">
+                      KES {item.buying_price?.toLocaleString()}
+                      {item.discount_percentage > 0 && (
+                        <span className="discount">
+                          (-{item.discount_percentage.toFixed(0)}%)
+                        </span>
+                      )}
+                    </p>
+                    <button
+                      className="add-to-cart"
+                      onClick={(e) => handleAddToCart(item, e)}
+                    >
+                      Add To Cart
+                    </button>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <p className='message'>No sedan tyres found.</p>
+            )}
+          </div>
+
+          {/* -------- Pagination -------- */}
+          {loading ? (
+            <div className="pagination skeleton-pagination">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="skeleton-page-btn" />
+              ))}
+            </div>
+          ) : totalPages > 1 && (
+            <div className="pagination">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              >
+                Prev
+              </button>
+
+              {getVisiblePages()[0] > 1 && <span className="dots">…</span>}
+
+              {getVisiblePages().map(page => (
+                <button
+                  key={page}
+                  className={page === currentPage ? 'active' : ''}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {getVisiblePages().slice(-1)[0] < totalPages && <span className="dots">…</span>}
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

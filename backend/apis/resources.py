@@ -567,6 +567,7 @@ class ReviewReactionsResource(Resource):
             },
         }, 200
     
+    
 # ------------------ Orders ------------------
 class OrdersResource(Resource):
     @jwt_required()
@@ -577,22 +578,32 @@ class OrdersResource(Resource):
 
         summary = []
         for order in orders:
+            # Ensure order_items is always a list
+            order_items = order.order_items or []
+            if not isinstance(order_items, list):
+                order_items = [order_items]
+
+            # Uses model method to calculate total price
+            order.calculate_total()
+            total_items = sum(int(item.quantity or 0) for item in order_items)
+            total_price = float(order.total_price or 0)
+
             order_data = {
                 "id": order.id,
                 "status": order.status,
                 "paid": order.paid,
-                "total_items": sum(item.quantity for item in order.order_items),
-                "total_price": order.total_price,
+                "total_items": total_items,
+                "total_price": total_price,
                 "address": f"{order.street}, {order.city}, {order.country}",
                 "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
-                
+
                 # Include order items
                 "order_items": [
                     {
                         "id": item.id,
-                        "quantity": item.quantity,
-                        "price": float(item.unit_price),
-                        "subtotal": float(item.subtotal),
+                        "quantity": int(item.quantity or 0),
+                        "price": float(item.unit_price or 0),
+                        "subtotal": float(item.subtotal or 0),
                         "sparepart": {
                             "id": item.sparepart.id,
                             "brand": item.sparepart.brand,
@@ -601,7 +612,7 @@ class OrdersResource(Resource):
                             "image_url": item.sparepart.image
                         }
                     }
-                    for item in order.order_items
+                    for item in order_items
                 ]
             }
             summary.append(order_data)

@@ -1,8 +1,8 @@
 import uuid
-from sqlalchemy import event
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from datetime import datetime , timedelta
+from sqlalchemy import func, select, update, event
 import secrets
 import hashlib
 from core.extensions import db, bcrypt 
@@ -382,24 +382,28 @@ class OrderItems(db.Model, SerializerMixin):
     unit_price = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
 
-    # -------------------------- RELATIONSHIPS --------------------------------
+    # Relationships
     order = db.relationship("Orders", back_populates="order_items")
     sparepart = db.relationship("SpareParts", back_populates="order_items")
 
-    # ------------------------- SERIALIZE RULES -------------------------------
     serialize_rules = (
-    "-order.order_items",  
-    "-sparepart.order_items",  
+        "-order.order_items",  
+        "-sparepart.order_items",  
     )
 
     #-------------------------CUSTOM METHOD---------------------------------
-       #(calculates total price of order items)
-    def calculate_subtotal(self):
-        if self.sparepart:
+    def calculate_subtotal(self, use_sparepart_price_if_empty=True):
+        """
+        Calculate subtotal for this order item.
+        - Only uses sparepart price if unit_price is not set yet.
+        - This ensures existing orders stay frozen even if admin updates sparepart prices.
+        """
+        if use_sparepart_price_if_empty and (self.unit_price is None or self.unit_price == 0) and self.sparepart:
             self.unit_price = round(self.sparepart.marked_price - self.sparepart.discount_amount, 2)
         self.subtotal = round(self.unit_price * self.quantity, 2)
 
 #------------------------------EVENT LISTENERS---------------------------------
+# Sparepart listeners
 @event.listens_for(SpareParts, "before_insert")
 def sparepart_before_insert(mapper, connection, target):
     target.calculate_discount()
@@ -421,7 +425,6 @@ def review_change(mapper, connection, target):
         except Exception as e:
             print(f"[review_change] Error updating review stats: {e}")
 
-
 # ReviewReactions listeners
 @event.listens_for(ReviewReactions, "after_insert")
 @event.listens_for(ReviewReactions, "after_update")
@@ -435,19 +438,53 @@ def reaction_change(mapper, connection, target):
         except Exception as e:
             print(f"[reaction_change] Error updating review stats for reaction: {e}")
 
-@event.listens_for(OrderItems, "before_insert")
-def orderitem_before_insert(mapper, connection, target):
-    target.calculate_subtotal()
-    if target.order:
-        target.order.calculate_total()
 
-@event.listens_for(OrderItems, "before_update")
-def orderitem_before_update(mapper, connection, target):
-    target.calculate_subtotal()
-    if target.order:
-        target.order.calculate_total()
+# ---------------- OrderItems Event Listeners ----------------
+# After insert/update/delete: recalc subtotal and update order total safely
+@event.listens_for(OrderItems, "after_insert")
+@event.listens_for(OrderItems, "after_update")
+def orderitem_after_insert_or_update(mapper, connection, target):
+    # Ensure the subtotal is correct
+    if mapper.class_ == OrderItems:
+        # Only recalc subtotal if quantity or unit_price changed on update
+        state = db.inspect(target)
+        recalc_subtotal = (
+            target.unit_price is None or target.unit_price == 0
+            or (state.attrs.quantity.history.has_changes() if state.attrs.quantity else True)
+            or (state.attrs.unit_price.history.has_changes() if state.attrs.unit_price else True)
+        )
+        if recalc_subtotal:
+            target.calculate_subtotal(use_sparepart_price_if_empty=True)
+            # Update subtotal directly in DB to avoid session commit
+            connection.execute(
+                OrderItems.__table__.update()
+                .where(OrderItems.id == target.id)
+                .values(subtotal=target.subtotal, unit_price=target.unit_price)
+            )
+
+    # Update order total_price safely in DB
+    order_total_stmt = (
+        update(Orders.__table__)
+        .where(Orders.__table__.c.id == target.order_id)
+        .values(
+            total_price=select(func.coalesce(func.sum(OrderItems.unit_price * OrderItems.quantity), 0))
+            .where(OrderItems.order_id == target.order_id)
+            .scalar_subquery()
+        )
+    )
+    connection.execute(order_total_stmt)
+
 
 @event.listens_for(OrderItems, "after_delete")
 def orderitem_after_delete(mapper, connection, target):
-    if target.order:
-        target.order.calculate_total()
+    # Update order total_price safely in DB after deletion
+    order_total_stmt = (
+        update(Orders.__table__)
+        .where(Orders.__table__.c.id == target.order_id)
+        .values(
+            total_price=select(func.coalesce(func.sum(OrderItems.unit_price * OrderItems.quantity), 0))
+            .where(OrderItems.order_id == target.order_id)
+            .scalar_subquery()
+        )
+    )
+    connection.execute(order_total_stmt)

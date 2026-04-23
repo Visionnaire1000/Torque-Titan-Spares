@@ -122,3 +122,206 @@
 }
 
 
+/* ============================= */
+/* Container */
+/* ============================= */
+.reviews-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Summary */
+.reviews-summary {
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+/* ============================= */
+/* Card */
+/* ============================= */
+.review-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.review-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.item-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Header */
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.display-name {
+  font-weight: 600;
+}
+
+.review-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Image */
+.review-image-wrapper {
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.review-image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+/* ---------------- Review Rating ---------------- */
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.star.filled {
+  fill: gold;
+  stroke: gold;
+}
+
+.rating-value {
+  font-size: 0.85rem;
+  color: #555;
+  margin-left: 4px;
+}
+
+/* ============================= */
+/* Comment */
+/* ============================= */
+.review-comment {
+  font-size: 0.9rem;
+  margin: 6px 0;
+  margin-left: 12px;
+  color: #374151;
+}
+
+/* ============================= */
+/* Reactions */
+/* ============================= */
+.review-reactions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.reaction {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* ============================= */
+/* Skeleton */
+/* ============================= */
+.skeleton {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+.skeleton-line.small {
+  width: 60%;
+}
+
+.skeleton-image {
+  height: 120px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+/* ============================= */
+/* Error State */
+/* ============================= */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+}
+
+.retry-btn {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  background: #1f2933;
+}
+
+.retry-icon {
+  transition: transform 0.3s ease;
+}
+
+.retry-btn:hover .retry-icon {
+  transform: rotate(90deg);
+}
+
+/* ============================= */
+/* Empty */
+/* ============================= */
+.message {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+/* ============================= */
+/* Animation */
+/* ============================= */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+

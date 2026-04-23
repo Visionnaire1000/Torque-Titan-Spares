@@ -95,7 +95,7 @@ html, body {
 
 
 .logo img {
-  width: 50%;
+  width: 80%;
   height: 30%;
   display: flex;
   justify-content: left;
@@ -104,13 +104,20 @@ html, body {
   margin-right: 10px;
 }
 
-/* Styling adjustment when logged in */
-.navbar.logged-in .logo img {
-  width: 80%;
+/* Styling adjustment when logged out*/
+.navbar.logged-out .logo img {
+  width: 60%;
   height: 30%;
   margin-right: -300px;
 }
 
+
+/* Styling adjustment when logged in */
+.navbar.logged-in .logo img {
+  width: 60%;
+  height: 30%;
+  margin-right: -300px;
+}
 
 
 .right-section {
@@ -161,9 +168,9 @@ html, body {
 /* ================================
    Dropdown Menu (Slides LEFT)
 ================================ */
-.dropdown-menu {
+.navbar.logged-in .dropdown-menu {
   position: absolute;
-  margin-top: 36px;
+  margin-top: 28px;
   margin-left: -54px;
   transform: translateX(-100%);
   min-width: 230px;
@@ -179,8 +186,8 @@ html, body {
 
 .navbar.logged-out .dropdown-menu {
   position: absolute;
-  margin-top: 36px;
-  margin-left: -67px;
+  margin-top: 26px;
+  margin-left: 2px;
   transform: translateX(-100%);
   min-width: 230px;
   background: #ffffff;
@@ -319,4 +326,43 @@ html, body {
   outline: none;
 }
 
+/* Wrapper for the icon + badge */
+.orders-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px; /* space between icon and text */
+}
+
+/* Badge style */
+.orders-badge {
+  position: absolute;
+  top: -6px;      /* slightly above the icon */
+  right: -6px;    /* slightly to the right */
+  background-color: #ff3b30; /* red notification color */
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 4px;
+  border-radius: 999px; /* makes it circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+/* Optional: small bounce animation when count changes */
+@keyframes badge-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.orders-badge.animate {
+  animation: badge-pop 0.3s ease-in-out;
+}
 

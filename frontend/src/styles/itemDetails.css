@@ -2,6 +2,7 @@
 .item-details {
   max-width: 900px;
   margin: 2rem auto;
+  margin-bottom: 100px;
   padding: 1rem;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
@@ -47,9 +48,9 @@
 }
 
 #discount {
-  font-size: 0.9rem;
-  color: #ff4d4f;
-  margin-left: 0.5rem;
+  color: #e41a139b;
+  font-size: small;
+  margin-left: 5px;
 }
 
 .item-info button {
@@ -90,6 +91,11 @@
 
 .star.half {
   color: #ffd700;
+}
+
+.admin-star {
+  margin-left: 12px;
+  margin-bottom: 8px;
 }
 
 /* ---------------------- Add Review ---------------------- */
@@ -177,6 +183,7 @@
 .review-reactions button {
   padding: 4px 10px;
   margin-right: 6px;
+  margin-left: 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -231,12 +238,33 @@
   gap: 4px;
 }
 
+/* ---------- Like / Dislike Buttons ---------- */
+.review-reactions button {
+  background-color: #e0e0e0; 
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Active states */
 .review-reactions button.active.like-btn {
-  background-color: #077a22;
+  color: #0f9d58;
 }
 
 .review-reactions button.active.dislike-btn {
-  background-color: rgb(145, 7, 7);
+  color: #d93025; 
+}
+
+/* Optional: subtle hover for inactive buttons */
+.review-reactions button:not(.active):hover {
+  background-color: #d5d5d5;
 }
 
 .review {
@@ -250,4 +278,26 @@
 .review-user{
   margin-left: 12px;
   color: rgb(0,64,128);
+}
+
+.skeleton {
+  background-color: #e2e2e2;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton.shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150px;
+  height: 100%;
+  width: 150px;
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.4) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  animation: shimmer 1.5s infinite;
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Select, { components } from "react-select";
-import { Clock } from "lucide-react";
+import { Clock, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../contexts/AuthContext";
@@ -10,7 +11,7 @@ import "../../styles/admin/adminSpares.css";
 const HISTORY_KEY = "spareparts_history";
 const HISTORY_LIMIT = 6;
 
-const AdminSpareParts = () => {
+const AdminSpareparts = () => {
   const { authFetch } = useAuth();
 
   const [options, setOptions] = useState([]);
@@ -45,21 +46,13 @@ const AdminSpareParts = () => {
       .then(res => res.json())
       .then(data => {
         const parts = data.items || [];
-        const mapped = parts.map(part => {
-          const displayLabel = `${part.brand} ${part.vehicle_type} ${part.category}`;
-          return {
-            label: displayLabel,
-            value: part.id,
-            searchableText: `
-              ${part.brand}
-              ${part.vehicle_type}
-              ${part.category}
-            `.toLowerCase(),
-            part,
-            isHistory: false
-          };
-        });
-        setOptions(mapped);
+        const individualOptions = parts.map(part => ({
+          label: `${part.brand} ${part.vehicle_type} ${part.category}`,
+          value: part.id,
+          part,
+          searchableText: `${part.brand} ${part.vehicle_type} ${part.category}`.toLowerCase(),
+        }));
+        setOptions(individualOptions);
       });
   }, [authFetch]);
 
@@ -101,8 +94,6 @@ const AdminSpareParts = () => {
     if (!option) return;
     saveToHistory(option);
     setSelectedPart(option.part);
-
-    // Autofill form
     setFormData({
       category: option.part.category || "",
       vehicle_type: option.part.vehicle_type || "",
@@ -123,8 +114,7 @@ const AdminSpareParts = () => {
         <div className="search-option">
           {data.isHistory && <Clock className="clock-icon" size={16} strokeWidth={1.8} />}
           <div className="option-main">
-            <strong>{data.part.brand} {data.part.vehicle_type} {data.part.category}</strong>
-            {data.isHistory && <span className="history-tag">Recent</span>}
+            <strong>{data.label}</strong>
           </div>
           {data.isHistory && (
             <button
@@ -136,7 +126,7 @@ const AdminSpareParts = () => {
               }}
               aria-label="Remove search"
             >
-              ×
+              <X size={16} strokeWidth={2} />
             </button>
           )}
         </div>
@@ -152,12 +142,11 @@ const AdminSpareParts = () => {
         label: "Recent Searches",
         options: historyOptions.map(item => ({
           ...item,
-          isHistory: true,
-          label: `${item.part.brand} ${item.part.vehicle_type} ${item.part.category}`
+          isHistory: true
         }))
       });
     }
-    if (inputValue) {
+    if (inputValue || options.length) {
       groups.push({ label: "All Results", options });
     }
     return groups;
@@ -181,11 +170,7 @@ const AdminSpareParts = () => {
       const data = await res.json();
       if (data.message) {
         notifySuccess(data.message);
-
-        // REFRESH options to include new part
         fetchSpareParts();
-
-        // Update history
         reloadHistory();
       } else notifyError(data.error);
     } catch {
@@ -206,8 +191,6 @@ const AdminSpareParts = () => {
       const data = await res.json();
       if (data.message) {
         notifySuccess(data.message);
-
-        // Update history if exists
         setHistoryOptions(prev => {
           const updated = prev.map(h =>
             h.value === selectedPart.id ? { ...h, part: { ...formData, id: selectedPart.id } } : h
@@ -215,8 +198,6 @@ const AdminSpareParts = () => {
           localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
           return updated;
         });
-
-        // Refresh options to reflect update
         fetchSpareParts();
       } else notifyError(data.error);
     } catch {
@@ -247,8 +228,6 @@ const AdminSpareParts = () => {
           image: "",
           description: "",
         });
-
-        // Refresh options after deletion
         fetchSpareParts();
       } else notifyError(data.error);
     } catch {
@@ -303,7 +282,9 @@ const AdminSpareParts = () => {
       {/* IMAGE PREVIEW */}
       {formData.image && (
         <div className="spare-image-preview">
-          <img src={formData.image} alt={`${formData.brand} ${formData.vehicle_type}`} />
+          <Link to={`/items/${selectedPart.id}`}>
+            <img src={formData.image} alt={`${formData.brand} ${formData.vehicle_type}`} />
+          </Link>
         </div>
       )}
 
@@ -328,4 +309,4 @@ const AdminSpareParts = () => {
   );
 };
 
-export default AdminSpareParts;
+export default AdminSpareparts;

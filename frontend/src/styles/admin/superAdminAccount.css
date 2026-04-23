@@ -446,9 +446,6 @@ button.danger:hover:not(:disabled) {
   box-shadow: none;
 }
 
-/* ===============================
-   Optional subtle description
-================================ */
 .superadmin-zone p {
   font-size: 13px;
   color: #6b7280;

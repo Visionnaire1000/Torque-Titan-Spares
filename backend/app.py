@@ -16,9 +16,8 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     jwt.init_app(app)
     api = Api(app) 
-
-    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
-    #CORS(app, resources={r"/*": {"origins": app.config["FRONTEND_URL"]}})
+    
+    CORS(app, resources={r"/*": {"origins": app.config["FRONTEND_URL"]}}, supports_credentials=True)
     
     # Register routes
     register_routes(api)

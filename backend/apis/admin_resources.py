@@ -81,102 +81,6 @@ class DeleteAdmin(Resource):
 
         return {"message": f"Admin {admin_user.email} deleted successfully"}, 200
     
- 
-# ------------------------------ Orders Management -------------------------------------------
-class AdminOrders(Resource):
-
-    # View all orders (admin and super_admin only)
-    @jwt_required()
-    def get(self):
-        current_user = Users.query.get(get_jwt_identity())
-
-        if current_user.role not in ["admin", "super_admin"]:
-            return {"error": "Admins only"}, 403
-
-        orders = Orders.query.order_by(Orders.created_at.desc()).all()
-
-        summary = []
-
-        for order in orders:
-            order_data = {
-                "id": order.id,
-                "status": order.status,
-                "paid": order.paid,
-                "total_items": sum(item.quantity for item in order.order_items),
-                "total_price": order.total_price,
-
-                "address": f"{order.street}, {order.city}, {order.country}",
-
-                "created_at": order.created_at.isoformat() if order.created_at else None,
-                "shipped_at": order.shipped_at.isoformat() if order.shipped_at else None,
-                "delivered_at": order.delivered_at.isoformat() if order.delivered_at else None,
-
-                # Order items
-                "order_items": [
-                    {
-                        "id": item.id,
-                        "quantity": item.quantity,
-                        "price": float(item.unit_price),
-                        "subtotal": float(item.subtotal),
-
-                        "sparepart": {
-                            "id": item.sparepart.id,
-                            "brand": item.sparepart.brand,
-                            "category": item.sparepart.category,
-                            "vehicle_type": item.sparepart.vehicle_type,
-                            "image_url": item.sparepart.image
-                        }
-                    }
-                    for item in order.order_items
-                ]
-            }
-
-            summary.append(order_data)
-
-        return {"orders": summary}, 200
-
-
-    # Update order status
-    @jwt_required()
-    def patch(self, order_id):
-
-        current_user = Users.query.get(get_jwt_identity())
-
-        if current_user.role not in ["admin", "super_admin"]:
-            return {"error": "Admins only"}, 403
-
-        order = Orders.query.get_or_404(order_id)
-
-        data = request.get_json()
-        new_status = data.get("status")
-
-        if not new_status:
-            return {"error": "Missing status field"}, 400
-
-        allowed_statuses = ["pending", "cancelled", "shipped", "delivered"]
-
-        if new_status not in allowed_statuses:
-            return {"error": f"Invalid status. Allowed: {allowed_statuses}"}, 400
-
-        # Update status
-        order.status = new_status
-
-        # Set timestamps
-        if new_status == "shipped" and not order.shipped_at:
-            order.shipped_at = datetime.utcnow()
-
-        if new_status == "delivered" and not order.delivered_at:
-            order.delivered_at = datetime.utcnow()
-
-        db.session.commit()
-
-        return {
-            "message": f"Order {order.id} updated successfully",
-            "status": order.status,
-            "shipped_at": order.shipped_at.isoformat() if order.shipped_at else None,
-            "delivered_at": order.delivered_at.isoformat() if order.delivered_at else None
-        }, 200
-    
     
 # ------------------------------ Spare Parts Management -------------------------------------------
 class AdminSpareParts(Resource):
@@ -397,4 +301,98 @@ class AdminReviewReactionsResource(Resource):
             "total_likes": total_likes,
             "total_dislikes": total_dislikes,
             "reactions": reaction_list
+        }, 200
+    
+ # ------------------------------ Orders Management -------------------------------------------
+class AdminOrders(Resource):
+    # View all orders (admin and super_admin only)
+    @jwt_required()
+    def get(self):
+        current_user = Users.query.get(get_jwt_identity())
+
+        if current_user.role not in ["admin", "super_admin"]:
+            return {"error": "Admins only"}, 403
+
+        # Fetch all orders, newest first
+        orders = Orders.query.order_by(Orders.created_at.desc()).all()
+
+        summary = []
+
+        for order in orders:
+
+            # Dynamically calculates total price from order_items
+            total_price = sum(float(item.subtotal) for item in order.order_items)
+
+            order_data = {
+                "id": order.id,
+                "status": order.status,
+                "paid": order.paid,
+                "total_items": sum(item.quantity for item in order.order_items),
+                "total_price": total_price,  
+
+                "address": f"{order.street}, {order.city}, {order.country}",
+
+                "created_at": order.created_at.isoformat() if order.created_at else None,
+                "shipped_at": order.shipped_at.isoformat() if order.shipped_at else None,
+                "delivered_at": order.delivered_at.isoformat() if order.delivered_at else None,
+
+                # Order items
+                "order_items": [
+                    {
+                        "id": item.id,
+                        "quantity": item.quantity,
+                        "price": float(item.unit_price),
+                        "subtotal": float(item.subtotal),
+                        "sparepart": {
+                            "id": item.sparepart.id,
+                            "brand": item.sparepart.brand,
+                            "category": item.sparepart.category,
+                            "vehicle_type": item.sparepart.vehicle_type,
+                            "image_url": item.sparepart.image
+                        }
+                    }
+                    for item in order.order_items
+                ]
+            }
+
+            summary.append(order_data)
+
+        return {"orders": summary}, 200
+
+    # Update order status
+    @jwt_required()
+    def patch(self, order_id):
+        current_user = Users.query.get(get_jwt_identity())
+
+        if current_user.role not in ["admin", "super_admin"]:
+            return {"error": "Admins only"}, 403
+
+        order = Orders.query.get_or_404(order_id)
+
+        data = request.get_json()
+        new_status = data.get("status")
+
+        if not new_status:
+            return {"error": "Missing status field"}, 400
+
+        allowed_statuses = ["pending", "cancelled", "shipped", "delivered"]
+        if new_status not in allowed_statuses:
+            return {"error": f"Invalid status. Allowed: {allowed_statuses}"}, 400
+
+        # Update status
+        order.status = new_status
+
+        # Set timestamps
+        if new_status == "shipped" and not order.shipped_at:
+            order.shipped_at = datetime.utcnow()
+        if new_status == "delivered" and not order.delivered_at:
+            order.delivered_at = datetime.utcnow()
+
+        db.session.commit()
+
+        return {
+            "message": f"Order {order.id} updated successfully",
+            "status": order.status,
+            "shipped_at": order.shipped_at.isoformat() if order.shipped_at else None,
+            "delivered_at": order.delivered_at.isoformat() if order.delivered_at else None
         }, 200

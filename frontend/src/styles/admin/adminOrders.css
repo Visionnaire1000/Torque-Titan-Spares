@@ -181,5 +181,291 @@
   justify-content: center;
 }
 
+.confirm-btn,
+.cancel-btn {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn {
+  background-color: #28a745; 
+  padding: 6px 12px;
+  color: #fff;
+}
+.confirm-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #dc3545; 
+  padding: 6px 12px;
+  color: #fff;
+}
+.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.Toastify__toast-body > div {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+
+.Toastify__toast--success {
+  border-left: 6px solid #28a745;
+}
+
+.Toastify__toast--error {
+  border-left: 6px solid #dc3545;
+}
+
+
+
+/* ---------------- Skeleton Base ---------------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f6f7f8;
+}
+
+/* Shimmer effect */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  height: 100%;
+  width: 150%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------------- Text Blocks ---------------- */
+.skeleton-text {
+  height: 12px;
+  border-radius: 6px;
+  background: #e0e0e0;
+  margin: 8px 0;
+}
+
+.skeleton-text.title {
+  height: 16px;
+  width: 50%;
+}
+
+.w-80 { width: 80%; }
+.w-60 { width: 60%; }
+.w-50 { width: 50%; }
+.w-40 { width: 40%; }
+.w-30 { width: 30%; }
+
+/* ---------------- Image ---------------- */
+.skeleton-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  background: #e0e0e0;
+}
+
+/* ---------------- Button ---------------- */
+.skeleton-btn {
+  width: 140px;
+  height: 32px;
+  border-radius: 8px;
+  background: #e0e0e0;
+  margin-top: 10px;
+}
+
+/* ---------------- Icon ---------------- */
+.skeleton-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #e0e0e0;
+}
+
+/* ---------------- Tabs ---------------- */
+.skeleton-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.skeleton-tab {
+  width: 90px;
+  height: 32px;
+  border-radius: 20px;
+  background: #e0e0e0;
+}
+
+/* ---------------- Match Real Layout ---------------- */
+.order-card.skeleton {
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.order-item-card {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.order-item-info {
+  flex: 1;
+}
+
+/* -------- Empty State (No Orders) -------- */
+.orders-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.empty-card {
+  background: #fff;
+  padding: 40px 30px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.empty-icon {
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.empty-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.empty-card p {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* CTA button */
+.empty-btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.empty-btn:hover {
+  background: #1f2933;
+  transform: translateY(-1px);
+}
+
+/* -------- Tab Empty State -------- */
+.empty-tab {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.empty-tab h3 {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  color: #111827;
+}
+
+.empty-tab p {
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+/* -------- Animation -------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------- Error State -------- */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-state h2 {
+  font-size: 1.5rem;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.error-state p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  max-width: 400px;
+}
+
+/* Retry button */
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  transform: translateY(-1px);
+  background: #1f2933;
+}
+
+.retry-icon {
+  transition: transform 0.3s ease;
+}
+
+.retry-btn:hover .retry-icon {
+  transform: rotate(90deg);
+}
+
+
+
 
 

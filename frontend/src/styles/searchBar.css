@@ -5,6 +5,7 @@
   font-family: Arial, sans-serif;
   z-index: 1;
 }
+
 .search-overlay {
   position: fixed;
   top: 0;
@@ -28,7 +29,20 @@
 
 .search-option {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; 
+  gap: 8px; 
+}
+
+.option-main {
+  display: flex;
+  flex-direction: column; 
+  flex: 1;
+}
+
+.clock-icon {
+  flex-shrink: 0;
+  margin-right: 12px;
 }
 
 .item-link {
@@ -40,9 +54,17 @@
   text-decoration: underline;
 }
 
-.clock-icon {
+.remove-history-item {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-size: 16px;
+  cursor: pointer;
   flex-shrink: 0;
-  color: white;
+}
+
+.remove-history-item:hover {
+  color: #fff;
 }
 
 .history-tag {

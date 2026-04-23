@@ -25,7 +25,7 @@ html, body {
    Logo
 ================================ */
 .logo img {
-  width: 80px;
+  width: 20%;
   height: auto;
 }
 
@@ -61,8 +61,8 @@ html, body {
 ================================ */
 .dropdown-menu {
   position: absolute;
-  margin-top: 36px;
-  margin-left: -54px;
+  margin-top: 20px;
+  margin-right: 50px;
   transform: translateX(-100%);
   min-width: 230px;
   background: #ffffff;

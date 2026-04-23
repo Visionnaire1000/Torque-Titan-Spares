@@ -24,6 +24,7 @@ import Cart from "./components/Cart";
 import Homepage from "./components/Homepage";
 import ItemDetails from "./components/ItemDetails";
 import SearchBar from './components/SearchBar';
+import SearchResults from "./components/SearchResults"; 
 import StripeCheckout from "./components/StripeCheckout";
 import PaymentSuccess from "./components/PaymentSuccess"; 
 import PaymentCancel from "./components/PaymentCancel"; 
@@ -51,6 +52,7 @@ import AdminOrders from "./components/admin/AdminOrders";
 import SuperAdminAccount from "./components/admin/adminDashboard/SuperAdminAccount";
 import AdminManagement from "./components/admin/adminDashboard/AdminManagement";
 import Reviews from "./components/admin/adminDashboard/Reviews";
+
 
 
 function App() {
@@ -130,6 +132,7 @@ function App() {
               />
               <Route path="/items/:id" element={<ItemDetails />} /> 
               <Route path="/search" element={<SearchBar />} />
+              <Route path="/search-results" element={<SearchResults />} />
               <Route 
                   path="/checkout" 
                   element={

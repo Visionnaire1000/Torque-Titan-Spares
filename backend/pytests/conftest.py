@@ -1,41 +1,50 @@
 import pytest
 from app import create_app
-from core.extensions import db
+from core.extensions import db as _db
 from sqlalchemy.orm import sessionmaker, scoped_session
 from flask_jwt_extended import create_access_token
 
-# ---------------- APP FIXTURE ----------------
+from database.models import Users, SpareParts
+
+
+# ================== APP ==================
+
 @pytest.fixture(scope="session")
 def test_app():
     app = create_app()
+
     app.config.update(
         SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=True,
-        JWT_SECRET_KEY="test-secret"
+        JWT_SECRET_KEY="test-secret",
+        PROPAGATE_EXCEPTIONS=True
     )
+
     with app.app_context():
         yield app
-        
-# ---------------- DATABASE SETUP ----------------
+
+
+# ================== DB SETUP ==================
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database(test_app):
-    """Create all tables once for the session, drop after tests finish."""
     with test_app.app_context():
-        db.create_all()
+        _db.create_all()
         yield
-        db.drop_all()
+        _db.drop_all()
 
+
+# ================== SESSION ==================
 
 @pytest.fixture(autouse=True)
 def session(test_app):
-    """Rollback database between each test for isolation."""
     with test_app.app_context():
-        connection = db.engine.connect()
+        connection = _db.engine.connect()
         transaction = connection.begin()
 
-        Session = scoped_session(sessionmaker(bind=connection), scopefunc=lambda: None)
-        db.session = Session
+        Session = scoped_session(sessionmaker(bind=connection))
+        _db.session = Session
 
         yield Session
 
@@ -44,20 +53,71 @@ def session(test_app):
         Session.remove()
 
 
-# ---------------- CLIENT FIXTURE ----------------
+# ================== CLIENT ==================
+
 @pytest.fixture
 def client(test_app):
-    """Flask test client for making requests."""
     return test_app.test_client()
 
 
-# ---------------- AUTH HELPER ----------------
+# ================== DB ALIAS ==================
+
+@pytest.fixture
+def db(session):
+    return session
+
+
+# ================== USER FIXTURE (FIXED) ==================
+
+@pytest.fixture
+def user(session):
+    user = Users(
+        email="test@example.com",
+        email_verified=True
+    )
+    user.set_password("password123")
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+
+# ================== AUTH HEADER ==================
+
 @pytest.fixture
 def auth_header():
-    """Returns a function to generate Authorization header for a given user."""
-
     def _make(user):
         token = create_access_token(identity=str(user.id))
         return {"Authorization": f"Bearer {token}"}
 
     return _make
+
+
+# ================== AUTH HEADERS ==================
+
+@pytest.fixture
+def auth_headers(auth_header, user):
+    return auth_header(user)
+
+
+# ================== SPARE PART FIXTURE (FIXED) ==================
+
+@pytest.fixture
+def spare_part(session):
+    part = SpareParts(
+        category="tyre",
+        vehicle_type="sedan",
+        brand="Toyota",
+        colour="black",
+        buying_price=800,
+        marked_price=1000,
+        description="Test part"
+    )
+
+    session.add(part)
+    session.commit()
+    session.refresh(part)
+
+    return part

@@ -154,3 +154,134 @@
   font-size: 16px;
   user-select: none;
 }
+
+
+/* -------- Skeleton Base -------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f6f7f8;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* -------- Text -------- */
+.skeleton-text {
+  height: 12px;
+  border-radius: 6px;
+  background: #e0e0e0;
+  margin: 8px 0;
+}
+
+.w-80 { width: 80%; }
+.w-60 { width: 60%; }
+.w-40 { width: 40%; }
+
+/* -------- Image -------- */
+.product-img {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  background: #e0e0e0;
+  margin-bottom: 10px;
+}
+
+/* -------- Button -------- */
+.skeleton-btn {
+  height: 32px;
+  border-radius: 8px;
+  background: #e0e0e0;
+  margin-top: 10px;
+}
+
+/* -------- Pagination -------- */
+.skeleton-pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.skeleton-page-btn {
+  width: 40px;
+  height: 32px;
+  border-radius: 6px;
+  background: #e0e0e0;
+}
+
+/* -------- Error State -------- */
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.error-state h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.error-state p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.retry-btn {
+  padding: 10px 20px;
+  background: #111;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+.retry-btn:hover {
+  opacity: 0.85;
+}
+
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #111;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.retry-btn:hover {
+  opacity: 0.85;
+}
+
+.retry-icon {
+  transition: transform 0.4s ease;
+}
+
+.message{
+  margin-bottom: 80px;
+}
+
+

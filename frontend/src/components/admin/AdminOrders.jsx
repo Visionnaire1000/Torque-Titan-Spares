@@ -1,35 +1,97 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import config from "../../config";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, RefreshCw, PackageOpen } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../../styles/admin/adminOrders.css";
 
+/* ---------------- Skeleton Loader ---------------- */
+const SkeletonOrderCard = () => (
+  <div className="order-card skeleton">
+    <div className="order-header">
+      <div className="skeleton-text title" />
+      <div className="skeleton-icon" />
+    </div>
+
+    <div className="skeleton-text w-40" />
+    <div className="skeleton-text w-30" />
+    <div className="skeleton-text w-60" />
+    <div className="skeleton-text w-50" />
+
+    <div className="skeleton-btn" />
+
+    <div className="order-items">
+      {[1, 2].map((i) => (
+        <div key={i} className="order-item-card">
+          <div className="skeleton-image" />
+          <div className="order-item-info">
+            <div className="skeleton-text w-80" />
+            <div className="skeleton-text w-40" />
+            <div className="skeleton-text w-40" />
+            <div className="skeleton-text w-50" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/* ---------------- Error State ---------------- */
+const ErrorState = ({ onRetry }) => (
+  <div className="error-state">
+    <h2>Something went wrong</h2>
+    <p>Unable to load orders. Please check your connection and try again.</p>
+
+    <button className="retry-btn" onClick={onRetry}>
+      <RefreshCw size={18} className="retry-icon" />
+      Retry
+    </button>
+  </div>
+);
+
 const AdminOrders = () => {
   const { authFetch } = useAuth();
+  const location = useLocation();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
   const [expandedOrderId, setExpandedOrderId] = useState(null);
-  const [notifications, setNotifications] = useState({});
 
-  // seen timestamps per tab
-  const [seenTabs, setSeenTabs] = useState(() => {
-    const saved = localStorage.getItem("seenOrderTabs");
-    return saved ? JSON.parse(saved) : {};
+  const [seenOrderIds, setSeenOrderIds] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem("admin_seen_order_ids")) || {};
+    return {
+      pending: stored.pending || [],
+      shipped: stored.shipped || [],
+      delivered: stored.delivered || [],
+      cancelled: stored.cancelled || [],
+    };
   });
 
+  const prevOrdersRef = useRef([]);
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tabs = ["pending", "shipped", "delivered", "cancelled"];
 
+  /* ---------------- Persist Seen ---------------- */
+  useEffect(() => {
+    localStorage.setItem("admin_seen_order_ids", JSON.stringify(seenOrderIds));
+    window.dispatchEvent(new CustomEvent("admin_orders_updated", { detail: { type: "seen_update" } }));
+  }, [seenOrderIds]);
+
+  /* ---------------- Set Tab from URL ---------------- */
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && tabs.includes(tab)) setActiveTab(tab);
+  }, [location.search]);
+
+  /* ---------------- Helpers ---------------- */
   const formatOrderTime = (dateString) => {
     if (!dateString) return "";
-    const safeDate = dateString.endsWith("Z")
-      ? new Date(dateString)
-      : new Date(dateString + "Z");
+    const utcDate = dateString.endsWith("Z") ? new Date(dateString) : new Date(`${dateString}Z`);
     return new Intl.DateTimeFormat(undefined, {
       timeZone,
       year: "numeric",
@@ -37,150 +99,24 @@ const AdminOrders = () => {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
       hour12: true,
-    }).format(safeDate);
+    }).format(utcDate);
   };
 
-  // --------- FETCH ORDERS WITH FIRST-LOAD SYNC ---------
-  const fetchOrders = async (silent = false) => {
-    if (!silent) setLoading(true);
-    setError("");
-
-    try {
-      const res = await authFetch(`${config.API_BASE_URL}/admin/orders`);
-      if (!res.ok) throw new Error("Failed to fetch orders");
-
-      const data = await res.json();
-      const fetchedOrders = data.orders || [];
-      setOrders(fetchedOrders);
-
-      // Count per status
-      const counts = {};
-      fetchedOrders.forEach((order) => {
-        const status = order.status.toLowerCase();
-        counts[status] = (counts[status] || 0) + 1;
-      });
-
-      // ---------- SYNC seenTabs on first load ----------
-      if (!silent) {
-        const newSeenTabs = { ...seenTabs };
-
-        Object.keys(counts).forEach((status) => {
-          const tabOrders = fetchedOrders.filter(
-            (o) => o.status.toLowerCase() === status
-          );
-          if (tabOrders.length) {
-            newSeenTabs[status] = Math.max(
-              ...tabOrders.map((o) =>
-                new Date(
-                  o.created_at.endsWith("Z")
-                    ? o.created_at
-                    : o.created_at + "Z"
-                ).getTime()
-              )
-            );
-          }
-        });
-
-        setSeenTabs(newSeenTabs);
-        localStorage.setItem("seenOrderTabs", JSON.stringify(newSeenTabs));
-      }
-
-      // Compute notifications for orders after seenTabs
-      const updatedNotifications = {};
-      Object.keys(counts).forEach((status) => {
-        const lastSeen = seenTabs[status] || 0;
-
-        const unseenCount = fetchedOrders.filter((order) => {
-          if (order.status.toLowerCase() !== status) return false;
-          const orderTime = new Date(
-            order.created_at.endsWith("Z")
-              ? order.created_at
-              : order.created_at + "Z"
-          ).getTime();
-          return orderTime > lastSeen;
-        }).length;
-
-        if (unseenCount > 0) updatedNotifications[status] = unseenCount;
-      });
-
-      setNotifications(updatedNotifications);
-    } catch (err) {
-      if (!silent) setError(err.message);
-      console.error(err);
-    } finally {
-      if (!silent) setLoading(false);
+  const hasOrdersChanged = (oldOrders, newOrders) => {
+    if (oldOrders.length !== newOrders.length) return true;
+    for (let i = 0; i < newOrders.length; i++) {
+      if (
+        oldOrders[i].id !== newOrders[i].id ||
+        oldOrders[i].status !== newOrders[i].status ||
+        oldOrders[i].total_items !== newOrders[i].total_items ||
+        oldOrders[i].total_price !== newOrders[i].total_price
+      ) return true;
     }
+    return false;
   };
 
-  // --------- UPDATE ORDER STATUS ---------
-  const updateOrderStatus = (orderId, status) => {
-    const toastId = toast.info(
-      <div>
-        Mark order #{orderId} as {status}?
-        <div style={{ marginTop: "8px", display: "flex", gap: "8px" }}>
-          <button
-            onClick={async () => {
-              toast.dismiss(toastId);
-              try {
-                const res = await authFetch(
-                  `${config.API_BASE_URL}/admin/orders/${orderId}`,
-                  {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status }),
-                  }
-                );
-
-                const data = await res.json();
-                if (!res.ok)
-                  throw new Error(data.message || "Failed to update order");
-
-                toast.success(`Order #${orderId} marked as ${status}`);
-                fetchOrders(true);
-              } catch (err) {
-                toast.error(err.message);
-              }
-            }}
-            style={{
-              padding: "4px 8px",
-              border: "none",
-              background: "#4CAF50",
-              color: "#fff",
-              cursor: "pointer",
-              borderRadius: "4px",
-            }}
-          >
-            Confirm
-          </button>
-
-          <button
-            onClick={() => toast.dismiss(toastId)}
-            style={{
-              padding: "4px 8px",
-              border: "none",
-              background: "#f44336",
-              color: "#fff",
-              cursor: "pointer",
-              borderRadius: "4px",
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeOnClick: false }
-    );
-  };
-
-  // --------- POLLING ---------
-  useEffect(() => {
-    fetchOrders(false);
-    const interval = setInterval(() => fetchOrders(true), 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // --------- GROUP ORDERS ---------
   const groupedOrders = orders.reduce((acc, order) => {
     const status = order.status.toLowerCase();
     if (!acc[status]) acc[status] = [];
@@ -190,71 +126,151 @@ const AdminOrders = () => {
 
   Object.keys(groupedOrders).forEach((status) => {
     groupedOrders[status].sort(
-      (a, b) => new Date(b.created_at + "Z") - new Date(a.created_at + "Z")
+      (a, b) => new Date(`${b.created_at}Z`) - new Date(`${a.created_at}Z`)
     );
   });
 
-  const tabs = ["pending", "shipped", "delivered", "cancelled"];
+  /* ---------------- Fetch Orders ---------------- */
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError("");
 
-  // --------- TAB CLICK HANDLER ---------
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
+    try {
+      const res = await authFetch(`${config.API_BASE_URL}/admin/orders`);
+      if (!res.ok) throw new Error("Failed to fetch orders");
 
-    const tabOrders = orders.filter(
-      (o) => o.status.toLowerCase() === tab
-    );
+      const data = await res.json();
+      const newOrders = data.orders || [];
 
-    const latestTimestamp = tabOrders.length
-      ? Math.max(
-          ...tabOrders.map((o) =>
-            new Date(
-              o.created_at.endsWith("Z")
-                ? o.created_at
-                : o.created_at + "Z"
-            ).getTime()
-          )
-        )
-      : Date.now();
+      if (hasOrdersChanged(prevOrdersRef.current, newOrders)) {
+        setOrders(newOrders);
+        prevOrdersRef.current = newOrders;
 
-    const updatedSeenTabs = {
-      ...seenTabs,
-      [tab]: latestTimestamp,
-    };
+        localStorage.setItem("admin_orders_cache", JSON.stringify(newOrders));
 
-    setSeenTabs(updatedSeenTabs);
-    localStorage.setItem("seenOrderTabs", JSON.stringify(updatedSeenTabs));
-
-    setNotifications((prev) => ({ ...prev, [tab]: 0 }));
+        window.dispatchEvent(new CustomEvent("admin_orders_updated", { detail: { type: "data_update" } }));
+      }
+    } catch (err) {
+      setError(err.message);
+      if (!silent) toast.error(err.message);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   };
 
-  // --------- UI STATES ---------
-  if (loading && orders.length === 0)
-    return <p className="message">Loading orders...</p>;
+  /* ---------------- Update Status ---------------- */
+  const updateOrderStatus = (orderId, status) => {
+    const toastId = toast.info(
+      <div>
+        Mark order #{orderId} as {status}?
+        <div style={{ marginTop: "8px", display: "flex", gap: "8px" }}>
+          <button
+            onClick={async () => {
+              toast.dismiss(toastId);
+              try {
+                const res = await authFetch(`${config.API_BASE_URL}/admin/orders/${orderId}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Failed");
+                toast.success(`Order #${orderId} marked as ${status}`);
+                fetchOrders(true);
+              } catch (err) {
+                toast.error(err.message);
+              }
+            }}
+            className="confirm-btn"
+          >
+            Confirm
+          </button>
+          <button onClick={() => toast.dismiss(toastId)} className="cancel-btn">
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { autoClose: false }
+    );
+  };
 
-  if (error) return <p className="message">Error: {error}</p>;
+  /* ---------------- Polling ---------------- */
+  useEffect(() => {
+    fetchOrders();
+    const interval = setInterval(() => fetchOrders(true), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  if (!orders.length) return <p className="message">No orders yet.</p>;
+  /* ---------------- Tab Click ---------------- */
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    const ordersInTab = groupedOrders[tab] || [];
+
+    setSeenOrderIds((prev) => ({
+      ...prev,
+      [tab]: ordersInTab.map((o) => o.id),
+    }));
+  };
+
+  /* ---------------- Render ---------------- */
+
+  // Skeleton
+  if (loading) {
+    return (
+      <div className="orders-container">
+        <div className="orders-tabs skeleton-tabs">
+          {tabs.map((_, i) => (
+            <div key={i} className="skeleton-tab" />
+          ))}
+        </div>
+
+        <div className="orders-list">
+          {[1, 2, 3].map((i) => (
+            <SkeletonOrderCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error
+  if (error) return <ErrorState onRetry={fetchOrders} />;
+
+  // No orders at all
+  if (!orders.length) {
+    return (
+      <div className="orders-empty">
+        <div className="empty-card">
+          <PackageOpen size={48} className="empty-icon" />
+          <h2>No orders yet</h2>
+          <p>No customer orders have been placed yet.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="orders-container">
-      <ToastContainer position="top-right" newestOnTop />
+      <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Tabs */}
       <div className="orders-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            className={`tab-btn ${activeTab === tab ? "active" : ""}`}
-            onClick={() => handleTabClick(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            {notifications[tab] > 0 && (
-              <span className="notification-badge">
-                {notifications[tab]}
-              </span>
-            )}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const ordersInTab = groupedOrders[tab] || [];
+          const seenIds = new Set(seenOrderIds[tab] || []);
+          const count = ordersInTab.filter((o) => !seenIds.has(o.id)).length;
+
+          return (
+            <button
+              key={tab}
+              className={`tab-btn ${activeTab === tab ? "active" : ""}`}
+              onClick={() => handleTabClick(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {count > 0 && <span className="tab-badge">{count}</span>}
+            </button>
+          );
+        })}
       </div>
 
       {/* Orders */}
@@ -265,9 +281,7 @@ const AdminOrders = () => {
               <div
                 className="order-header"
                 onClick={() =>
-                  setExpandedOrderId(
-                    expandedOrderId === order.id ? null : order.id
-                  )
+                  setExpandedOrderId(expandedOrderId === order.id ? null : order.id)
                 }
               >
                 <strong>Order #{order.id}</strong> — {order.status.toUpperCase()}
@@ -281,20 +295,12 @@ const AdminOrders = () => {
               </div>
 
               <div>Total Items: {order.total_items}</div>
-              <div>Total Cost: KES {order.total_price?.toLocaleString() || "0"}</div>
+              <div>Total Cost: KES {order.total_price?.toLocaleString()}</div>
               <div>Shipping Address: {order.address}</div>
               <div>
-                Created At: {formatOrderTime(order.created_at)}
-                <small className="timezone-label"> ({timeZone})</small>
+                Created At: {formatOrderTime(order.created_at)}{" "}
+                <small className="timezone-label">({timeZone})</small>
               </div>
-
-              {order.shipped_at && (
-                <div>Shipped At: {formatOrderTime(order.shipped_at)}</div>
-              )}
-
-              {order.delivered_at && (
-                <div>Delivered At: {formatOrderTime(order.delivered_at)}</div>
-              )}
 
               {order.status === "pending" && (
                 <div className="admin-actions">
@@ -329,9 +335,11 @@ const AdminOrders = () => {
                           className="order-item-img"
                         />
                       </Link>
+
                       <div className="order-item-info">
                         <strong>
-                          {item.sparepart.brand} {item.sparepart.category} for {item.sparepart.vehicle_type}
+                          {item.sparepart.brand} {item.sparepart.category} for{" "}
+                          {item.sparepart.vehicle_type}
                         </strong>
                         <p>Quantity: {item.quantity}</p>
                         <p>Unit Price: KES {item.price?.toLocaleString()}</p>
@@ -344,7 +352,16 @@ const AdminOrders = () => {
             </div>
           ))
         ) : (
-          <p>No {activeTab} orders.</p>
+          <div className="empty-tab">
+            <PackageOpen size={36} className="empty-icon" />
+            <h3>No {activeTab} orders</h3>
+            <p>
+              {activeTab === "pending" && "No pending orders to process."}
+              {activeTab === "shipped" && "No orders currently in transit."}
+              {activeTab === "delivered" && "No completed deliveries yet."}
+              {activeTab === "cancelled" && "No cancelled orders."}
+            </p>
+          </div>
         )}
       </div>
     </div>

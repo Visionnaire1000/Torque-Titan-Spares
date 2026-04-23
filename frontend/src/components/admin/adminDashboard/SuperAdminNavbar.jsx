@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Menu, Home, User, Package, MessageSquare } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import config from "../../../config";
@@ -8,138 +8,147 @@ import "../../../styles/admin/superAdminNavbar.css";
 const SuperAdminNavbar = () => {
   const { logout, authFetch, user } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // --- Badge states ---
   const [newReviewsCount, setNewReviewsCount] = useState(0);
   const [orderNotifications, setOrderNotifications] = useState(0);
-
-  // --- Track seen orders locally ---
-  const [seenOrderTabs, setSeenOrderTabs] = useState(() => {
-    const saved = localStorage.getItem("seenOrderTabs");
-    return saved ? JSON.parse(saved) : {};
-  });
-
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // --- Fetch reviews count ---
+  // -------------------- ORDER NOTIFICATIONS --------------------
+  const calculateOrderNotifications = () => {
+    const orders = JSON.parse(localStorage.getItem("admin_orders_cache")) || [];
+    const seenRaw = JSON.parse(localStorage.getItem("admin_seen_order_ids")) || {};
+
+    const seenPending = new Set(seenRaw.pending || []);
+    const seenCancelled = new Set(seenRaw.cancelled || []);
+
+    const pendingUnseen = orders.filter(
+      (o) => o.status.toLowerCase() === "pending" && !seenPending.has(o.id)
+    ).length;
+
+    const cancelledUnseen = orders.filter(
+      (o) => o.status.toLowerCase() === "cancelled" && !seenCancelled.has(o.id)
+    ).length;
+
+    setOrderNotifications(pendingUnseen + cancelledUnseen);
+  };
+
+  const markPendingOrdersAsSeen = () => {
+    const orders = JSON.parse(localStorage.getItem("admin_orders_cache")) || [];
+    const seenRaw = JSON.parse(localStorage.getItem("admin_seen_order_ids")) || {};
+
+    const pendingIds = orders
+      .filter((o) => o.status.toLowerCase() === "pending")
+      .map((o) => o.id);
+
+    const updatedSeen = {
+      pending: Array.from(new Set([...(seenRaw.pending || []), ...pendingIds])),
+      shipped: seenRaw.shipped || [],
+      delivered: seenRaw.delivered || [],
+      cancelled: seenRaw.cancelled || [],
+    };
+
+    localStorage.setItem("admin_seen_order_ids", JSON.stringify(updatedSeen));
+
+    // Update badge instantly
+    calculateOrderNotifications();
+    window.dispatchEvent(new Event("admin_orders_updated"));
+  };
+
+  // -------------------- REVIEW NOTIFICATIONS --------------------
+  const calculateReviewNotifications = (data = null) => {
+    const reviews = data || JSON.parse(localStorage.getItem("admin_reviews_cache")) || [];
+    const seen = JSON.parse(localStorage.getItem("admin_seen_review_ids")) || [];
+    const seenSet = new Set(seen);
+
+    const unseen = reviews.filter((r) => !seenSet.has(r.id)).length;
+    setNewReviewsCount(unseen);
+  };
+
   const fetchReviewNotifications = async () => {
     if (!user) return;
-
     try {
       const res = await authFetch(`${config.API_BASE_URL}/admin/reviews`);
       const data = await res.json();
-      const lastSeen = Number(localStorage.getItem("lastSeenReviewsCount") || 0);
-      const diff = data.length - lastSeen;
-
-      // Only update state if it changed
-      const newCount = diff > 0 ? diff : 0;
-      setNewReviewsCount((prev) => (prev !== newCount ? newCount : prev));
+      localStorage.setItem("admin_reviews_cache", JSON.stringify(data));
+      calculateReviewNotifications(data);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // --- Fetch orders notifications ---
-  const fetchOrderNotifications = async () => {
-    if (!user) return;
-
+  const markReviewsAsSeen = async () => {
     try {
-      const res = await authFetch(`${config.API_BASE_URL}/admin/orders`);
-      if (!res.ok) throw new Error("Failed to fetch orders");
+      const res = await authFetch(`${config.API_BASE_URL}/admin/reviews`);
       const data = await res.json();
-      const orders = data.orders || [];
-
-      const counts = {};
-      orders.forEach((order) => {
-        const status = order.status.toLowerCase();
-        counts[status] = (counts[status] || 0) + 1;
-      });
-
-      let totalUnseen = 0;
-      Object.keys(counts).forEach((status) => {
-        if (!seenOrderTabs[status]) totalUnseen += counts[status];
-      });
-
-      // Only update state if it changed
-      setOrderNotifications((prev) => (prev !== totalUnseen ? totalUnseen : prev));
+      const allIds = data.map((r) => r.id);
+      localStorage.setItem("admin_seen_review_ids", JSON.stringify(allIds));
+      window.dispatchEvent(new Event("admin_reviews_updated"));
     } catch (err) {
       console.error(err);
     }
   };
 
-  // --- Silent polling every 30s ---
+  // -------------------- INIT --------------------
   useEffect(() => {
+    calculateOrderNotifications();
     fetchReviewNotifications();
-    fetchOrderNotifications();
 
-    const interval = setInterval(() => {
-      fetchReviewNotifications();
-      fetchOrderNotifications();
-    }, 30000);
+    const handleOrders = () => calculateOrderNotifications();
+    const handleReviews = () => calculateReviewNotifications();
 
-    return () => clearInterval(interval);
-  }, [user, seenOrderTabs]);
+    window.addEventListener("admin_orders_updated", handleOrders);
+    window.addEventListener("admin_reviews_updated", handleReviews);
 
-  // --- Handle order tab click ---
-  const handleOrdersClick = () => {
-    const allSeen = {};
-    Object.keys(seenOrderTabs).forEach((key) => (allSeen[key] = true));
-    setSeenOrderTabs(allSeen);
-    localStorage.setItem("seenOrderTabs", JSON.stringify(allSeen));
-    setOrderNotifications(0);
-  };
+    const handleStorage = (e) => {
+      if (e.key === "admin_orders_cache" || e.key === "admin_seen_order_ids") calculateOrderNotifications();
+      if (e.key === "admin_reviews_cache" || e.key === "admin_seen_review_ids") calculateReviewNotifications();
+    };
+    window.addEventListener("storage", handleStorage);
 
-  // --- Handle reviews tab click ---
-  const handleReviewsClick = async () => {
-    try {
-      const res = await authFetch(`${config.API_BASE_URL}/admin/reviews`);
-      const data = await res.json();
-      localStorage.setItem("lastSeenReviewsCount", data.length);
-      setNewReviewsCount(0);
-    } catch (err) {
-      console.error(err);
-    }
+    return () => {
+      window.removeEventListener("admin_orders_updated", handleOrders);
+      window.removeEventListener("admin_reviews_updated", handleReviews);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [user]);
+
+  // -------------------- ACTIVE TAB LOGIC --------------------
+  const getActiveTabClass = (tabRoute) => {
+    if (tabRoute === "orders") return location.pathname.startsWith("/admin-orders") ? "active-tab" : "";
+    if (tabRoute === "reviews") return location.pathname.startsWith("/reviews") ? "active-tab" : "";
+    if (tabRoute === "/") return location.pathname === "/" ? "active-tab" : "";
+    if (tabRoute === "/super-admin-account") return location.pathname === "/super-admin-account" ? "active-tab" : "";
+    return "";
   };
 
   return (
     <nav className="navbar admin-navbar">
       <div className="logo">
-        <img src="https://i.imgur.com/wVCDyd7.png" alt="Torque Titan logo" />
+        <img src="https://i.imgur.com/wVCDyd7.png" alt="logo" />
       </div>
 
       <div className="dashboard-dropdown">
-        <button
-          className="dashboard-button"
-          onClick={() => setShowDropdown(!showDropdown)}
-          title="Dashboard"
-        >
+        <button className="dashboard-button" onClick={() => setShowDropdown(!showDropdown)}>
           <Menu />
         </button>
 
         {showDropdown && (
           <div className="dropdown-menu">
-            <NavLink
-              to="/"
-              className={({ isActive }) => (isActive ? "tab active-tab" : "tab")}
-            >
+            <NavLink to="/" className={`tab ${getActiveTabClass("/")}`}>
               <Home size={18} /> Home
             </NavLink>
 
-            <NavLink
-              to="/super-admin-account"
-              className={({ isActive }) =>
-                isActive ? "tab active-tab" : "tab"
-              }
-            >
-              <User size={18} /> Account Management
+            <NavLink to="/super-admin-account" className={`tab ${getActiveTabClass("/super-admin-account")}`}>
+              <User size={18} /> Account
             </NavLink>
 
-            <NavLink
-              to="/admin-orders"
-              className={({ isActive }) =>
-                isActive ? "tab active-tab" : "tab"
-              }
-              onClick={handleOrdersClick}
+            {/* ---------------- ORDERS ---------------- */}
+            <div
+              className={`tab orders-tab ${getActiveTabClass("orders")}`}
+              onClick={() => {
+                markPendingOrdersAsSeen();
+                navigate("/admin-orders?tab=pending");
+              }}
             >
               <div className="icon-wrapper">
                 <Package size={18} />
@@ -150,14 +159,13 @@ const SuperAdminNavbar = () => {
                 )}
               </div>
               Orders
-            </NavLink>
+            </div>
 
+            {/* ---------------- REVIEWS ---------------- */}
             <NavLink
               to="/reviews"
-              className={({ isActive }) =>
-                isActive ? "tab active-tab review-tab" : "tab review-tab"
-              }
-              onClick={handleReviewsClick}
+              className={`tab review-tab ${getActiveTabClass("reviews")}`}
+              onClick={markReviewsAsSeen}
             >
               <div className="icon-wrapper">
                 <MessageSquare size={18} />
