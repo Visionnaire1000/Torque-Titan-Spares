@@ -94,3 +94,16 @@
 .remove-history-item:hover {
   color: red;
 }
+
+
+
+/*--------------------------------RESPONSIVE BREAKPOINT -------------------------------------------*/
+/* ---------- MOBILE----------- */
+@media (max-width: 480px) {
+.search-page {
+  position: relative;
+  max-width: 480px;
+  width: 88%;
+}
+
+}

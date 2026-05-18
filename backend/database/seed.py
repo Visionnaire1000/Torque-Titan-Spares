@@ -1,7 +1,10 @@
-import os
 from app import create_app
 from database.models import Users, SpareParts , Orders , OrderItems , Reviews , ReviewReactions 
 from core.extensions import db
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = create_app()
 

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Trash2, PlusCircle, MinusCircle, ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Navbar from "./Navbar";
 import '../styles/cart.css';
 
 const Cart = () => {
@@ -23,6 +24,7 @@ const Cart = () => {
   if (!items || items.length === 0) {
     return (
       <div className="cart-container">
+        <Navbar />
         <h1>Your Cart</h1>
         <div className="empty-cart-box">
           <ShoppingCart size={48} />
@@ -33,6 +35,8 @@ const Cart = () => {
   }
 
   return (
+    <>
+    <Navbar />
     <div className="cart-container">
       <div className="cart-grid">
         <div className="cart-items">
@@ -60,7 +64,7 @@ const Cart = () => {
                          <img
                           src={item.image}
                           alt={item.brand}
-                          className="cart-item-image"> 
+                          id="cart-image"> 
                           </img>
                           </Link>
                         <p id="name">{item.brand} {item.category} for {item.vehicle_type} </p>
@@ -103,7 +107,7 @@ const Cart = () => {
               onClick={() => {
               const toastId = toast.warn(
          <div className="toast-cart-confirm">
-              Are you sure you want to clear your cart?
+            Are you sure you want to clear your cart?
           <div style={{ marginTop: "12px" }}>
             <button
               onClick={() => {
@@ -123,7 +127,7 @@ const Cart = () => {
     >
      Clear Cart
    </button>
-</div>
+  </div>
         </div>
 
         <div className="order-summary">
@@ -142,6 +146,7 @@ const Cart = () => {
         </div>
       </div>
     </div>
+  </>
   );
 };
 

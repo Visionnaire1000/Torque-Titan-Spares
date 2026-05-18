@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { RefreshCw } from "lucide-react";
 import config from '../../config';
+import Navbar from "../Navbar";
 import "../../styles/rims.css";
 
 /* ---------------- Skeleton Card ---------------- */
@@ -102,27 +103,28 @@ const SUVRims = () => {
 
   return (
     <div className="products-page">
+      <Navbar />
       {!error && (
-        <div className="filters">
-          <select value={brand} onChange={e => setBrand(e.target.value)}>
-            <option value="">All Brands</option>
-            {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
+        <div className="filters-section">
+          <select value={brand} onChange={e => setBrand(e.target.value)} id="filters">
+            <option value="" id="filter-option">All Brands</option>
+            {availableBrands.map(b => <option key={b} value={b} id="filter-option">{b}</option>)}
           </select>
 
-          <select value={colour} onChange={e => setColour(e.target.value)}>
-            <option value="">All Colours</option>
+          <select value={colour} onChange={e => setColour(e.target.value)} id="filters">
+            <option value="" id="filter-option">All Colours</option>
             {availableColours.map(c => (
-              <option key={c} value={c}>
+              <option key={c} value={c} id="filter-option">
                 {c.charAt(0).toUpperCase() + c.slice(1)}
               </option>
             ))}
           </select>
 
-          <select value={price} onChange={e => setPrice(e.target.value)}>
-            <option value="">All Prices</option>
-            <option value="low">Low (&lt; 25k)</option>
-            <option value="medium">Medium (25k–35k)</option>
-            <option value="high">High (&gt; 35k)</option>
+          <select value={price} onChange={e => setPrice(e.target.value)} id="filters">
+            <option value="" id="filter-option">All Prices</option>
+            <option value="low" id="filter-option">Low (&lt; 25k)</option>
+            <option value="medium" id="filter-option">Medium (25k–35k)</option>
+            <option value="high" id="filter-option">High (&gt; 35k)</option>
           </select>
         </div>
       )}
@@ -131,12 +133,12 @@ const SUVRims = () => {
         <ErrorState onRetry={fetchRims} />
       ) : (
         <>
-          <div className="products-grid">
+          <div className="grid">
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             ) : items.length ? (
               items.map(item => (
-                <div key={item.id} className="item-card">
+                <div key={item.id} id="item-card">
                   <Link to={`/items/${item.id}`} className="item-card-link">
                     <img src={item.image} alt={item.brand} />
                     <h4>{item.brand} {item.category} for {item.vehicle_type}</h4>

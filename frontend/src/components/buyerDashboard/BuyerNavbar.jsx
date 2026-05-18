@@ -156,10 +156,6 @@ const BuyerNavbar = () => {
               <Home size={18} /> Home
             </NavLink>
 
-            <NavLink to="/account-management" className={({ isActive }) => isActive ? "tab active-tab" : "tab"}>
-              <User size={18} /> Account Management
-            </NavLink>
-
             <NavLink
               to="/orders"
               className={({ isActive }) => isActive ? "tab active-tab orders-tab" : "tab orders-tab"}
@@ -175,6 +171,11 @@ const BuyerNavbar = () => {
             <NavLink to="/address" className={({ isActive }) => isActive ? "tab active-tab" : "tab"}>
               <MapPin size={18} /> Address Book
             </NavLink>
+
+            <NavLink to="/account-management" className={({ isActive }) => isActive ? "tab active-tab" : "tab"}>
+              <User size={18} /> Account Management
+            </NavLink>
+
 
             {user && (
               <button

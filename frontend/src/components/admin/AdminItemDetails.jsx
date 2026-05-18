@@ -3,12 +3,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
 import config from "../../config";
-import {
-  Star,
-  ThumbsUp,
-  ThumbsDown,
-  RefreshCw,
-} from "lucide-react";
+import { Star, ThumbsUp, ThumbsDown, RefreshCw } from "lucide-react";
 import "../../styles/itemDetails.css";
 
 /* ---------------- Error State ---------------- */

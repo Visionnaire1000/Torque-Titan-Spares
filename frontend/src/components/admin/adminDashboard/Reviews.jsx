@@ -3,6 +3,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import config from "../../../config";
 import { RefreshCw, Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import Navbar from "../../Navbar";
 import "../../../styles/admin/reviews.css";
 
 /* ---------------- Skeleton Loader ---------------- */
@@ -120,6 +121,7 @@ const Reviews = () => {
 
   return (
     <div className="reviews-container">
+      <Navbar />
       <div className="reviews-summary">
         <strong>Total Reviews:</strong> {reviews.length}
       </div>

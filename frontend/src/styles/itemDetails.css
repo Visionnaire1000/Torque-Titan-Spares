@@ -2,7 +2,8 @@
 .item-details {
   max-width: 900px;
   margin: 2rem auto;
-  margin-bottom: 100px;
+  margin-top: 70px;
+  margin-bottom: 60px;
   padding: 1rem;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
@@ -300,4 +301,64 @@
     rgba(255,255,255,0) 100%
   );
   animation: shimmer 1.5s infinite;
+}
+
+
+/*--------------------------------RESPONSIVE BREAKPOINT -------------------------------------------*/
+/* ---------- MOBILE----------- */
+@media (max-width: 480px) {
+  .item-details {
+  max-width: 480px;
+  margin: 2rem auto;
+  margin-top: 4px;
+  margin-bottom: 30px;
+  padding: 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #fefefe;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ---------------------- Item Main ---------------------- */
+.item-main {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  margin-bottom: 2rem;
+}
+
+.item-main img {
+  width: 40%;
+  height: 30%;
+  border-radius: 8px;
+  margin-top: 10px;
+  object-fit: cover;
+}
+
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.item-info h2 {
+  color: rgb(0, 64, 128);
+  margin-bottom: 0.5rem;
+  margin-top: 4px;
+}
+
+}
+
+/*----------------------- RESPONSIVE BREAKPOINT----------------------------*/
+/* ---------- SMALL PHONES (360px–480px) ---------- */
+  @media (max-width: 480px) {
+.item-details {
+  margin-top: 90px;
+}
 }

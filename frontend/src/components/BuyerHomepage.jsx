@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import config from "../config";
+import Navbar from "./Navbar"; 
 import "../styles/homepage.css";
 import { Flame, RefreshCw } from "lucide-react";
 
@@ -124,6 +125,7 @@ const BuyerHomepage = () => {
   if (error) {
     return (
       <div className="homepage error-state">
+        <Navbar />
         <h2>Something went wrong</h2>
         <p>{error}</p>
         <button className="retry-btn" onClick={fetchSpareParts}>
@@ -136,6 +138,7 @@ const BuyerHomepage = () => {
 
   return (
     <div className="homepage">
+     <Navbar />
       <h2>
         <span className="fire-icon">
           <Flame size={24} color="red" />
@@ -158,7 +161,7 @@ const BuyerHomepage = () => {
                 className="item-card-link"
               >
                 <div
-                  className={`item-card ${
+                  className={`home-item ${
                     loadedImages[item.id] ? "" : "skeleton"
                   }`}
                 >
@@ -209,7 +212,7 @@ const BuyerHomepage = () => {
                 className="item-card-link"
               >
                 <div
-                  className={`item-card ${
+                  className={`home-item ${
                     loadedImages[item.id] ? "" : "skeleton"
                   }`}
                 >

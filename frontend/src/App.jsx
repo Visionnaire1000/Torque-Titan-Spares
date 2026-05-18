@@ -10,10 +10,6 @@ import { CartProvider } from "./contexts/CartContext";
 //protected routes component
 import RoleProtectedRoutes from "./components/RoleProtectedRoutes"; 
 
-//layout
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-
 //pages
 import Register from "./components/Register";
 import Login from "./components/Login";
@@ -60,7 +56,6 @@ function App() {
    <CartProvider>
       <Router>
         <div className="min-h-screen flex flex-col font-sans">
-          <Navbar />
           <main className="flex-1">
             <Routes>
               <Route path="/register" element={<Register />} /> 
@@ -177,7 +172,6 @@ function App() {
               <Route path="/bus-filters" element={<BusFilters />} />  
             </Routes>
           </main>
-          <Footer />
         </div>
       </Router>
       <ToastContainer

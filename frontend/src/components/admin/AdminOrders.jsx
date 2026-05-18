@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import config from "../../config";
 import { ChevronUp, ChevronDown, RefreshCw, PackageOpen } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
+import Navbar from "../Navbar";
 import "react-toastify/dist/ReactToastify.css";
 import "../../styles/admin/adminOrders.css";
 
@@ -251,6 +252,7 @@ const AdminOrders = () => {
 
   return (
     <div className="orders-container">
+      <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Tabs */}

@@ -5,6 +5,7 @@ import { ChevronUp, ChevronDown, PackageOpen, RefreshCw } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import config from "../../config";
+import Navbar from "../Navbar";
 import "../../styles/buyerOrders.css";
 
 /* ---------------- Skeleton Loader ---------------- */
@@ -212,6 +213,7 @@ const BuyerOrders = () => {
   if (loading) {
     return (
       <div className="orders-container">
+        <Navbar />
         <div className="orders-tabs skeleton-tabs">
           {tabs.map((_, i) => (
             <div key={i} className="skeleton-tab" />
@@ -231,6 +233,7 @@ const BuyerOrders = () => {
   if (!orders.length) {
   return (
     <div className="orders-empty">
+      <Navbar />
       <div className="empty-card">
         <PackageOpen size={48} className="empty-icon" />
         <h2>No orders yet</h2>
@@ -243,6 +246,7 @@ const BuyerOrders = () => {
 
   return (
     <div className="orders-container">
+      <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="orders-tabs">

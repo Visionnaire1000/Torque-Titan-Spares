@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import config from "../config";
+import Navbar from "./Navbar";
 import "../styles/searchResults.css";
 
 const SkeletonCard = () => (
@@ -68,6 +69,7 @@ const SearchResults = () => {
 
   return (
     <div className="search-results-page">
+      <Navbar />
       <h2>
         {keyword && `Results for "${keyword}"`}
         {brand && vehicle && category &&

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Navbar from "./Navbar";
 import '../styles/register.css';
 
 const Register = () => {
@@ -89,6 +90,7 @@ const Register = () => {
 
   return (
     <div className="register-container">
+      <Navbar />
       <div className="register-card">
         <h2>Create Account</h2>
 

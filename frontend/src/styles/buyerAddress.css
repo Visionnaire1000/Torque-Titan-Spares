@@ -1,7 +1,6 @@
 /* AddressBook container */
 .address-book-container {
   max-width: 500px;
-  margin: 2rem auto;
   padding: 2rem;
   border-radius: 12px;
   background-color: #f9f9f9;
@@ -9,10 +8,10 @@
   font-family: Arial, sans-serif;
 }
 
-/* Heading */
-.address-book-container h2 {
+.header {
   text-align: center;
   color: rgb(0, 64, 128);
+  margin-top: 60px;
   margin-bottom: 1.5rem;
   font-size: 1.8rem;
 }
@@ -56,4 +55,23 @@
 .address-book-container button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+
+
+/*--------------------------------RESPONSIVE BREAKPOINT -------------------------------------------*/
+/* ---------- MOBILE----------- */
+@media (max-width: 480px) {
+.address-book-container {
+  max-width: 480px;
+  width: 400px;
+  justify-content: center;
+  margin-left: 50px;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
 }

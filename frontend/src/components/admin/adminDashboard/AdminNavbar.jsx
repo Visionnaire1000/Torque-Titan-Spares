@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Menu, Home, User, Package, MessageSquare } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import config from "../../../config";
+import Navbar from "../../Navbar";
 import "../../../styles/admin/adminNavbar.css";
 
 const AdminNavbar = () => {
@@ -123,6 +124,7 @@ const AdminNavbar = () => {
 
   return (
     <nav className="navbar admin-navbar">
+      <Navbar />
       <div className="logo">
         <img src="https://i.imgur.com/wVCDyd7.png" alt="logo" />
       </div>

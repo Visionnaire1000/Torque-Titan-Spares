@@ -3,6 +3,8 @@
   padding: 20px;
   font-family: Arial, sans-serif;
   background-color: #f9f9f9;
+  margin-top: 70px; 
+  padding-bottom: 70px;
 }
 
 /* Page heading */
@@ -14,17 +16,17 @@
 }
 
 /* Filters container */
-.filters {
+.filters-section {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 25px;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 /* Filter dropdowns */
-.filters select {
+.filters-section select {
   padding: 8px 12px;
   font-size: 14px;
   border-radius: 6px;
@@ -34,19 +36,19 @@
   transition: border-color 0.2s;
 }
 
-.filters select:hover {
+.filters-section select:hover {
   border-color: #0077ff;
 }
 
 /* Products grid */
-.products-grid {
+.grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
 }
 
 
-.item-card {
+#item-card {
   background: #fff;
   border-radius: 12px;
   padding: 12px;
@@ -59,12 +61,12 @@
   height: 100%;
 }
 
-.item-card:hover {
+#item-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
-.item-card img {
+#item-card img {
   width: 100%;
   height: 150px;
   object-fit: contain;
@@ -72,7 +74,7 @@
   border-radius: 8px;
 }
 
-.item-card h4 {
+i#tem-card h4 {
   text-align: center;
   margin: 5px 0 10px;
   font-size: 1rem;
@@ -108,7 +110,7 @@
 }
 
 /* No products message */
-.products-grid p {
+.grid p {
   grid-column: 1 / -1;
   text-align: center;
   color: #7f0d0d;
@@ -285,4 +287,68 @@
 }
 
 
+/*--------------------------------RESPONSIVE BREAKPOINT -------------------------------------------*/
+/* ---------- MOBILE----------- */
+@media (max-width: 480px) {
+ .products-page {
+  max-width: 480px;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+}
 
+
+/* ---------------- Grid ---------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 20px;
+}
+
+/* ---------------- Item Card ---------------- */
+#item-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  text-decoration: none;
+  color: #222;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+#item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+
+/* ---------------- Image ---------------- */
+#item-card img {
+  width: 60%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+
+/* Filter dropdowns */
+#filters {
+  padding: 4px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+#filter-option{
+  font-size: xx-small;
+  padding: 4px 16px;
+
+}
+
+}

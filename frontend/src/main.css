@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
   padding: 0;
@@ -11,12 +15,19 @@ body {
   padding: 0;
 }
 
-main {
-  margin-top: 70px; 
-  padding-bottom: 70px;
-}
 
 .content-wrapper {
   min-height: 100vh; 
   padding-bottom: 70px; 
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
 }

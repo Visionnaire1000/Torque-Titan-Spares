@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Navbar from "../Navbar";
 import "../../styles/buyerAddress.css";
 
 const BuyerAddress = () => {
@@ -46,8 +47,9 @@ const BuyerAddress = () => {
 
   return (
     <div className="checkout-container">
+      <Navbar />
       <form onSubmit={handleSubmit}>
-        <h2>Shipping Address</h2>
+        <h2 className="header">Shipping Address</h2>
         <input
           type="text"
           name="street"

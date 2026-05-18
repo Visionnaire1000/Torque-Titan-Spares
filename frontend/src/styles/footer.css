@@ -5,12 +5,13 @@ html, body {
   width: 100%;
 }
 
+/* ---------- FOOTER BASE (LAPTOP DEFAULT - KEEP AS IS) ---------- */
 .footer {
   left: 0;
   right: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   background-color: rgb(0,64,128);
   padding: 0.8rem 1.5rem;
   color: white;
@@ -19,32 +20,35 @@ html, body {
   transition: transform 0.3s ease-in-out;
   transform: translateY(100%);
   bottom: 0;
+
   margin-left: -20px;
   margin-right: -20px;
 }
 
-
+/* ---------- LISTS ---------- */
 ul {
-  list-style-type: none; 
+  list-style-type: none;
   padding: 0;
   margin: 0;
   cursor: pointer;
 }
 
-.socials p{
+/* ---------- SOCIALS ---------- */
+.socials p {
   font-size: medium;
   font-weight: bold;
   margin-bottom: 5px;
 }
 
-.socials i{
+.socials i {
   margin-right: 20px;
 }
 
-.socials i:hover{
+.socials i:hover {
   color: rgb(0,255,80);
 }
 
+/* ---------- COLUMNS ---------- */
 .columns {
   display: flex;
   flex-wrap: wrap;
@@ -52,24 +56,31 @@ ul {
   gap: 100px;
 }
 
-.contacts h5{
-   font-size: medium;
+/* ---------- CONTACTS ---------- */
+.contacts h5 {
+  font-size: medium;
 }
-.contacts li{
+
+.contacts li {
   list-style-type: none;
 }
 
-.policies p{
+/* ---------- POLICIES ---------- */
+.policies p {
   cursor: pointer;
 }
-.policies p:hover{
+
+.policies p:hover {
   color: rgb(0,255,80);
 }
-.footer a{
+
+/* ---------- LINKS ---------- */
+.footer a {
   color: white;
   margin-right: 2px;
 }
 
+/* ---------- BOTTOM BAR ---------- */
 .bottomBar {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
@@ -77,4 +88,32 @@ ul {
   padding-top: 1rem;
   font-size: 0.9rem;
   color: #e0e0e0;
+}
+
+/*----------------------- RESPONSIVE BREAKPOINT----------------------------*/
+/* ---------- SMALL PHONES (360px–480px) ---------- */
+  @media (max-width: 480px) {
+  .footer {
+    padding: 1rem;
+    margin-right: -60px;
+    margin-left: -10px;
+  }
+
+  .columns {
+    gap: 20px;
+  }
+
+  .socials i {
+    margin-right: 10px;
+    font-size: 1rem;
+  }
+
+  .socials p,
+  .contacts h5 {
+    font-size: 0.9rem;
+  }
+
+  .bottomBar {
+    font-size: 0.8rem;
+  }
 }

@@ -3,6 +3,7 @@ import Select, { components } from 'react-select';
 import { useNavigate } from 'react-router-dom';
 import { Clock, X } from 'lucide-react';
 import config from '../config';
+import Navbar from "./Navbar";
 import '../styles/searchBar.css';
 
 const HISTORY_KEY = 'search_history';
@@ -154,6 +155,7 @@ const SearchBar = () => {
 
   return (
     <div className="search-page">
+      <Navbar />
       <div className="search-overlay" />
 
       <div className="search-header">

@@ -1,14 +1,12 @@
-/* homepage.css */
-
 /* ---------- General ---------- */
 .homepage {
   padding: 20px;
-  max-width: 1200px;
-  margin: auto;
+  margin-top: 70px; 
+  padding-bottom: 70px;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.loading{
+.loading {
   margin-top: 100px;
   color: red;
   font-family: Arial, Helvetica, sans-serif;
@@ -21,6 +19,7 @@ h2 {
   margin-top: 20px;
 }
 
+/* ---------- Animation ---------- */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.3); }
@@ -49,7 +48,7 @@ h2 {
   flex: 1;
 }
 
-.item-card {
+.home-item {
   background: #fff;
   border-radius: 12px;
   padding: 12px;
@@ -62,27 +61,27 @@ h2 {
   height: 100%;
 }
 
-.item-card:hover {
+.home-item:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
-.item-card img {
-  width: 100%;
-  height: 150px;
+.home-item img {
+  width: 50%;
+  height: auto;
   object-fit: contain;
   margin-bottom: 10px;
   border-radius: 8px;
 }
 
-.item-card h4 {
+.home-item h4 {
   text-align: center;
   margin: 5px 0 10px;
   font-size: 1rem;
   color: #333;
 }
 
-#price{
+#price {
   font-weight: bold;
   font-size: large;
   color: red;
@@ -95,7 +94,7 @@ h2 {
   margin-left: 5px;
 }
 
-/* ---------- Add to Cart Button ---------- */
+/* ---------- Add to Cart ---------- */
 .add-to-cart {
   background: rgb(0,64,128);
   color: white;
@@ -114,12 +113,12 @@ h2 {
 /* ---------- Grid ---------- */
 .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
   margin-bottom: 50px;
 }
 
-/* ---------- Loading / No items ---------- */
+/* ---------- Loading / empty ---------- */
 .homepage .loading,
 .homepage .no-items {
   text-align: center;
@@ -128,33 +127,19 @@ h2 {
   margin-top: 80px;
 }
 
-/* Skeleton card container */
+/* ---------- Skeleton ---------- */
 .item-card.skeleton {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  background: #f0f0f0a7; /* base card color */
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-}
-
-/* Entire card shimmer */
-.item-card.skeleton {
-  display: flex;
-  flex-direction: column;
   background: #f3f3f3;
-  border-radius: 12px;
   padding: 12px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  position: relative;
-  overflow: hidden;
   height: 100%;
 }
 
-/* Overlay shimmer for the whole card */
 .item-card.skeleton::before {
   content: "";
   position: absolute;
@@ -173,14 +158,14 @@ h2 {
   z-index: 1;
 }
 
-/* Keep inner skeleton elements so card structure looks right */
 .skeleton-image,
 .skeleton-text,
 .skeleton-button {
   position: relative;
-  z-index: 2; /* appear above the shimmer */
+  z-index: 2;
 }
 
+/* ---------- Error ---------- */
 .error-state {
   display: flex;
   flex-direction: column;
@@ -207,3 +192,112 @@ h2 {
   background: #d9363e;
 }
 
+
+/*----------------------------------RESPONSIVE BREAKPOINTS------------------------------------------------/
+/* ---------- SMALL PHONES (360px–480px) ---------- */
+@media (max-width: 480px) {
+
+.homepage {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    text-align: left;
+  }
+
+  .loading {
+    margin-top: 60px;
+    font-size: 0.9rem;
+  }
+
+  /* ---------- Carousel ---------- */
+  .top-carousel {
+    gap: 4px;
+    overflow-x: auto;  
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .item-card-link {
+    flex: 0 0 75%; 
+    scroll-snap-align: start;
+  }
+
+  .home-item {
+    padding: 10px;
+  }
+
+  .home-item img {
+    width: 70%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 40px;
+    object-fit: cover;
+}
+
+  .home-item h4 {
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  #price {
+    font-size: 1rem;
+  }
+
+  /* ---------- Grid ---------- */
+  .items-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .homepage .loading,
+  .homepage .no-items {
+    font-size: 1rem;
+    margin-top: 50px;
+  }
+}
+
+
+/* ---------- TABLETS (768px) ---------- */
+@media (max-width: 768px) {
+
+  .homepage {
+    padding: 15px;
+  }
+
+  .top-carousel {
+    overflow-x: auto;
+  }
+
+  .item-card-link {
+    flex: 0 0 45%;
+  }
+
+  .items-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ---------- SMALL LAPTOPS (1024px) ---------- */
+@media (max-width: 1024px) {
+
+  .items-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .top-carousel {
+    gap: 12px;
+  }
+}
+
+
+/* ---------- LARGE DESKTOP (1440px+) ---------- */
+@media (min-width: 1440px) {
+
+  .items-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
