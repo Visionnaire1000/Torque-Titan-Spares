@@ -122,6 +122,7 @@ The backend utilizes the following core models:
 ```bash
 git clone git@github.com:Visionnaire1000/Torque-Titan-Spares.git
 cd backend inside the directory,Torque-Titan-Spares
+```
 
 2. Create and activate a virtual environment:
 ```bash
