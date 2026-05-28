@@ -1,4 +1,4 @@
-# Toque Titan Spare Parts
+# Torque Titan Spare Parts
 
 ## Project Overview
 
