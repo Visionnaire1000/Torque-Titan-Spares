@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { Trash2, PlusCircle, MinusCircle, ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Navbar from "./Navbar";
 import '../styles/cart.css';
 
 const Cart = () => {
@@ -24,7 +23,7 @@ const Cart = () => {
   if (!items || items.length === 0) {
     return (
       <div className="cart-container">
-        <Navbar />
+        {/*<Navbar />*/}
         <h1>Your Cart</h1>
         <div className="empty-cart-box">
           <ShoppingCart size={48} />
@@ -36,7 +35,6 @@ const Cart = () => {
 
   return (
     <>
-    <Navbar />
     <div className="cart-container">
       <div className="cart-grid">
         <div className="cart-items">

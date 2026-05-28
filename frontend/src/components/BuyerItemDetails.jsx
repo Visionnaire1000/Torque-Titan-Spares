@@ -4,7 +4,6 @@ import { toast } from "react-toastify";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import config from "../config";
-import Navbar from "./Navbar";
 import "../styles/itemDetails.css";
 import { Star, ThumbsUp, ThumbsDown, RefreshCw } from "lucide-react";
 
@@ -350,7 +349,6 @@ const BuyerItemDetails = () => {
 
   return (
     <div className="item-details">
-      <Navbar />
       <div className="item-main">
         <img src={item.image} alt={item.brand} />
         <div className="item-info">

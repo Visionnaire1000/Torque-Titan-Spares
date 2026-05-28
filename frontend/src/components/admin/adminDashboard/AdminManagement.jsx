@@ -3,7 +3,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import config from "../../../config"; 
 import { toast, ToastContainer } from "react-toastify";
-import Navbar from "../../Navbar";
 import "react-toastify/dist/ReactToastify.css";
 import "../../../styles/admin/adminManagement.css";
 
@@ -98,7 +97,6 @@ const AdminManagement = () => {
 
   return (
     <div className="admin-management">
-      <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
       <h2>Admin Management</h2>
 

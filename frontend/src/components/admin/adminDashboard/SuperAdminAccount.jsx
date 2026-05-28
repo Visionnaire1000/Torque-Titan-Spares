@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Link } from "react-router-dom";
-import Navbar from "../../Navbar";
 import "../../../styles/admin/superAdminAccount.css";
 
 const SuperAdminAccount = () => {
@@ -89,7 +88,6 @@ const SuperAdminAccount = () => {
 
   return (
     <div className="account-management">
-      <Navbar />
       <h2>Hello {user.display_name}</h2>
 
       {/* ------------------ Password --------------------- */}

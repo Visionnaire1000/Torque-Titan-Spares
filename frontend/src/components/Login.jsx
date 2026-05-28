@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
-import Navbar from "./Navbar";
 import '../styles/login.css';
 
 const Login = () => {
@@ -33,7 +32,6 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <Navbar />
       <div className="login-card">
         <p className="sign">Sign in to your account</p>
 

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { RefreshCw } from "lucide-react";
 import config from '../../config';
-import Navbar from "../Navbar";
 import "../../styles/rims.css";
 
 /* ---------------- Skeleton Card ---------------- */
@@ -105,7 +104,6 @@ const SedanRims = () => {
 
   return (
     <div className="products-page">
-      <Navbar />
       {!error && (
         <div className="filters-section">
           <select value={brand} onChange={e => setBrand(e.target.value)} id="filters">

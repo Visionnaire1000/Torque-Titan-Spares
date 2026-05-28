@@ -12,6 +12,7 @@ import RoleProtectedRoutes from "./components/RoleProtectedRoutes";
 
 //pages
 import Register from "./components/Register";
+import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import AccountManagement from "./components/buyerDashboard/AccountManagement"; 
 import BuyerOrders from "./components/buyerDashboard/BuyerOrders";
@@ -24,6 +25,7 @@ import SearchResults from "./components/SearchResults";
 import StripeCheckout from "./components/StripeCheckout";
 import PaymentSuccess from "./components/PaymentSuccess"; 
 import PaymentCancel from "./components/PaymentCancel"; 
+
 
 //pages(categories)
 import SedanTyres from "./components/categories/SedanTyres";
@@ -41,15 +43,13 @@ import BusBatteries from "./components/categories/BusBatteries";
 import SedanFilters from "./components/categories/SedanFilters";
 import SUVFilters from "./components/categories/SUVFilters";
 import TruckFilters from "./components/categories/TruckFilters";
-import BusFilters from "./components/categories/BusFilters"; 
+import BusFilters from "./components/categories/BusFilters";  
 
 //pages(admin/super_admin)
 import AdminOrders from "./components/admin/AdminOrders";
 import SuperAdminAccount from "./components/admin/adminDashboard/SuperAdminAccount";
 import AdminManagement from "./components/admin/adminDashboard/AdminManagement";
 import Reviews from "./components/admin/adminDashboard/Reviews";
-
-
 
 function App() {
   return (
@@ -173,6 +173,7 @@ function App() {
             </Routes>
           </main>
         </div>
+        <Navbar />
       </Router>
       <ToastContainer
         position="top-right"

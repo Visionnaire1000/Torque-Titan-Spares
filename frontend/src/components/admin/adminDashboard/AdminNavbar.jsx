@@ -3,7 +3,6 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Menu, Home, User, Package, MessageSquare } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import config from "../../../config";
-import Navbar from "../../Navbar";
 import "../../../styles/admin/adminNavbar.css";
 
 const AdminNavbar = () => {
@@ -124,7 +123,6 @@ const AdminNavbar = () => {
 
   return (
     <nav className="navbar admin-navbar">
-      <Navbar />
       <div className="logo">
         <img src="https://i.imgur.com/wVCDyd7.png" alt="logo" />
       </div>
@@ -138,10 +136,6 @@ const AdminNavbar = () => {
           <div className="dropdown-menu">
             <NavLink to="/" className={`tab ${getActiveTabClass("/")}`}>
               <Home size={18} /> Home
-            </NavLink>
-
-            <NavLink to="/account-management" className={`tab ${getActiveTabClass("/super-admin-account")}`}>
-              <User size={18} /> Account
             </NavLink>
 
             {/* ---------------- ORDERS ---------------- */}
@@ -180,6 +174,22 @@ const AdminNavbar = () => {
               Reviews
             </NavLink>
 
+            {user?.role === "super_admin" ? (
+            <NavLink
+               to="/super-admin-account"
+               className={`tab ${getActiveTabClass("/super-admin-account")}`}
+            >
+              <User size={18} /> Account
+            </NavLink>
+             ) : user?.role === "admin" ? (
+            <NavLink
+              to="/account-management"
+              className={`tab ${getActiveTabClass("/account-management")}`}
+            >
+             <User size={18} /> Account
+            </NavLink>
+             ) : null}
+
             <button
               onClick={() => {
                 logout();
@@ -191,6 +201,8 @@ const AdminNavbar = () => {
           </div>
         )}
       </div>
+      {!user && <Link to="/login" className="login">Login</Link>}
+      {!user && <Link to="/register" className="register">Register</Link>}
     </nav>
   );
 };

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { RefreshCw } from "lucide-react";
 import config from '../../config';
-import Navbar from "../Navbar";
 import "../../styles/tyres.css";
 
 /* ---------------- Skeleton Card ---------------- */
@@ -106,8 +105,6 @@ const BusTyres = () => {
 
   return (
     <div className="products-page">
-      <Navbar />
-
       {/* -------- Filters -------- */}
       {!error && (
         <div className="filters-section">

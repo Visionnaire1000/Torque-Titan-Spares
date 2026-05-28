@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import Navbar from "./Navbar";
 import '../styles/register.css';
 
 const Register = () => {
@@ -62,7 +61,7 @@ const Register = () => {
   const handleSendOtp = async (e) => {
     e.preventDefault();
 
-    if (passwordError || emailError) return; // ✅ block if invalid
+    if (passwordError || emailError) return; // block if invalid
 
     setIsLoading(true);
     const success = await sendRegistrationOtp(formData.email, formData.password);
@@ -90,7 +89,6 @@ const Register = () => {
 
   return (
     <div className="register-container">
-      <Navbar />
       <div className="register-card">
         <h2>Create Account</h2>
 

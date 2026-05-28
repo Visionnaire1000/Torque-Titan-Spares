@@ -326,8 +326,8 @@
   display: flex;
   gap: 2rem;
   flex-wrap: wrap;
-  margin-top: 4px;
-  margin-bottom: 2rem;
+  margin-top: 10px;
+  margin-bottom: 50px;
 }
 
 .item-main img {

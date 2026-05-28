@@ -4,7 +4,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
 import config from "../config";
 import "react-toastify/dist/ReactToastify.css";
-import Navbar from "./Navbar";
 import "../styles/stripeCheckout.css";
 
 const StripeCheckout = () => {
@@ -88,7 +87,6 @@ const StripeCheckout = () => {
 
   return (
     <div className="checkout-container">
-      <Navbar />
       <form onSubmit={handleSubmit}>
         <h2>Shipping Address</h2>
         <input

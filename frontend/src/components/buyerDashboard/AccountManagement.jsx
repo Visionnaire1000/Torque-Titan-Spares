@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import Navbar from "../Navbar";
 import "../../styles/accountManagement.css";
 
 const AccountManagement = () => {
@@ -92,7 +91,6 @@ const AccountManagement = () => {
 
   return (
     <div className="account-management">
-      <Navbar />
       <h2>Hello {user.display_name}</h2>
 
       {/* ================= Change Password ================= */}

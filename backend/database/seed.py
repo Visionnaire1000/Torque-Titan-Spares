@@ -27,11 +27,11 @@ def clear_all_data():
 def seed_super_admin():
     """Create a super admin user without OTP verification."""
     with app.app_context():
-        email = os.getenv("SUPERADMIN_EMAIL")
-        password = os.getenv("SUPERADMIN_PASSWORD")
+        email = os.getenv("SUPER_ADMIN_EMAIL")
+        password = os.getenv("SUPER_ADMIN_PASSWORD")
 
         if not email or not password:
-            raise ValueError("SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set in .env")
+            raise ValueError("SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set in .env")
 
         # Check if superadmin already exists
         existing_admin = Users.query.filter_by(email=email).first()
@@ -56,6 +56,40 @@ def seed_super_admin():
         db.session.commit()
 
         print(f"✅ Super admin '{email}' created successfully")
+
+        
+def seed_buyer():
+    """Create a default user without OTP verification."""
+    with app.app_context():
+        email = os.getenv("USER_EMAIL")
+        password = os.getenv("USER_PASSWORD")
+
+        if not email or not password:
+            raise ValueError("USER_EMAIL and USER_PASSWORD must be set in .env")
+
+        # Check if user already exists
+        existing_buyer = Users.query.filter_by(email=email).first()
+        if existing_buyer:
+            print("⚠️ User already exists")
+            return
+
+        # Create super admin
+        buyer = Users(
+            email=email,
+            role="buyer",
+            email_verified=True,  # Skip OTP verification
+            otp_resend_count=0,
+            otp_attempts=0,
+            otp_last_sent=None,
+            email_otp_hash=None,
+            email_otp_expires=None
+        )
+        buyer.set_password(password)
+
+        db.session.add(buyer)
+        db.session.commit()
+
+        print(f"✅ Default Buyer '{email}' created successfully")
 
 
 # ----------------------------------SPARE PARTS SEEDING----------------------------------------------------
@@ -302,5 +336,6 @@ if __name__ == "__main__":
     with app.app_context():
         clear_all_data()
         seed_super_admin()
+        seed_buyer()
         seed_spareparts()
         print("✅ Database seeding completed successfully.")
