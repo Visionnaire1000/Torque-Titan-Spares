@@ -139,19 +139,11 @@ function App() {
               />
               <Route 
                   path="/payment-success" 
-                  element={
-                      <RoleProtectedRoutes allowedRoles={['buyer']}>
-                         <PaymentSuccess />
-                      </RoleProtectedRoutes>
-                      }
+                  element={<PaymentSuccess />}
               />
                <Route 
                   path="/payment-cancel" 
-                  element={
-                      <RoleProtectedRoutes allowedRoles={['buyer']}>
-                         <PaymentCancel />
-                      </RoleProtectedRoutes>
-                      }
+                  element={ <PaymentCancel /> }
               /> 
 
               {/*categories */}
