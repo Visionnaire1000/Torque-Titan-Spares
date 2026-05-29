@@ -12,11 +12,21 @@ const PaymentSuccess = () => {
     if (hasRun.current) return;
     hasRun.current = true;
 
-    clearCart();
+    const timer = setTimeout(() => {
+      try {
+        if (typeof clearCart === "function") {
+          clearCart();
+        }
 
-    toast.success("Payment Successful.", {
-      autoClose: 6000,
-    });
+        toast.success("Payment Successful.", {
+          autoClose: 6000,
+        });
+      } catch (err) {
+        console.error("PaymentSuccess error:", err);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [clearCart]);
 
   return (
@@ -40,22 +50,11 @@ const PaymentSuccess = () => {
           background: "#fff",
         }}
       >
-        
-
-        <h1
-          style={{
-            marginBottom: "10px",
-          }}
-        >
+        <h1 style={{ marginBottom: "10px" }}>
           Payment Successful!
         </h1>
 
-        <p
-          style={{
-            color: "#666",
-            marginBottom: "25px",
-          }}
-        >
+        <p style={{ color: "#666", marginBottom: "25px" }}>
           Thank you for your purchase. Your order has been received and is being
           processed.
         </p>
