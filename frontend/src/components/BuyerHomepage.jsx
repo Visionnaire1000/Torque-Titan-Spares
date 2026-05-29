@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import config from "../config";
-import Footer from "./Footer";
 import "../styles/homepage.css";
 import { Flame, RefreshCw } from "lucide-react";
 
@@ -242,8 +241,7 @@ const BuyerHomepage = () => {
         ) : (
           <p>No items available</p>
         )}
-      </div>,
-      <Footer />
+      </div>
     </div>
   );
 };

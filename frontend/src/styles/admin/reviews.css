@@ -307,13 +307,12 @@
   transform: rotate(90deg);
 }
 
-/* ============================= */
-/* Empty */
-/* ============================= */
+
 .message {
   text-align: center;
   padding: 40px;
-  color: #6b7280;
+  font-size: medium;
+  color: red;
 }
 
 /* ============================= */

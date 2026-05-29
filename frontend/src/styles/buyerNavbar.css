@@ -343,6 +343,7 @@ html, body {
 .navbar.logged-out .login, .register {
   color: white;
   text-decoration: none;
+  font-size: medium;
   margin-left: 20px;
   margin-right: -18px;
 }
@@ -365,6 +366,7 @@ html, body {
 .navbar.logged-out .logo img {
   width: 360%;
   height: 30%;
+  display: none;
   margin-left: -40px;
 }
 
