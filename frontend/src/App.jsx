@@ -55,6 +55,7 @@ function App() {
   return (
    <CartProvider>
       <Router>
+        <Navbar />
         <div className="min-h-screen flex flex-col font-sans">
           <main className="flex-1">
             <Routes>
@@ -173,7 +174,6 @@ function App() {
             </Routes>
           </main>
         </div>
-        <Navbar />
       </Router>
       <ToastContainer
         position="top-right"
