@@ -391,7 +391,7 @@ html, body {
 }
 
 .navbar.logged-out .dashboard-button {
- margin-left: 20px;
+   margin-left: -30px;
 }
 
 .dashboard-button svg {
@@ -422,8 +422,8 @@ html, body {
 }
 
 .navbar.logged-out .dropdown-menu {
-  margin-top: 24px;
-  margin-left: 120px;
+  margin-top: 18px;
+  margin-left: 134px;
 }
 
 /* ---------- ANIMATION ---------- */
