@@ -1,11 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../contexts/CartContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const PaymentSuccess = () => {
-  const { clearCart } = useCart();
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -13,21 +11,13 @@ const PaymentSuccess = () => {
     hasRun.current = true;
 
     const timer = setTimeout(() => {
-      try {
-        if (typeof clearCart === "function") {
-          clearCart();
-        }
-
-        toast.success("Payment Successful.", {
-          autoClose: 6000,
-        });
-      } catch (err) {
-        console.error("PaymentSuccess error:", err);
-      }
+      toast.success("Payment Successful.", {
+        autoClose: 6000,
+      });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [clearCart]);
+  }, []);
 
   return (
     <div
